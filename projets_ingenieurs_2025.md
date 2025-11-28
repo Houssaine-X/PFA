@@ -1,16 +1,4 @@
-Titre du Projet : Système de Protocole Contextuel Adaptatif pour Communication Intelligente
-Description : Framework de communication qui adapte automatiquement le protocole (REST, WebSocket, gRPC) et le format des messages selon le contexte (bande passante, latence, type de device) en utilisant des règles ML.
-Technologies Suggérées : Python, Spring Boot, Kafka, Protocol Buffers
-Thèmes Principaux : Modèles contextuels et protocoles, Gestion des réseaux mobiles
-
-
-Titre du Projet : Système de Gestion des Flux de Spectateurs pour Événements Massifs
-Description : Solution de simulation et gestion en temps réel des déplacements de foules lors d'événements majeurs. Utilise la computer vision pour le comptage, l'analyse des densités et la prévention des situations dangereuses.
-Technologies Suggérées : Python (OpenCV, PyTorch), Spring Boot, React, WebSocket
-Thèmes Principaux : Gestion du déplacement massif des spectateurs, Gestion des Incidents majeurs
-
-
-Titre du Projet : Système de Détection et Prévention des Crises Émotionnelles en Milieu Scolaire
-Description : Solution utilisant la computer vision et l'analyse comportementale pour détecter les signes de détresse émotionnelle chez les élèves, générer des alertes aux conseillers et proposer des interventions personnalisées.
-Technologies Suggérées : Python (OpenCV, TensorFlow), Spring Boot, React, PostgreSQL
-Thèmes Principaux : Santé émotionnelle, Reconnaissance Hybride
+Titre du Projet : Plateforme E-Commerce Intelligente avec Système de Recommandation Multi-Sources
+Description : Plateforme e-commerce centralisée intégrant un chatbot intelligent basé sur l'IA qui permet aux utilisateurs de rechercher des produits à travers différentes plateformes e-commerce simplement en fournissant une description ou un nom de produit. Le système agrège automatiquement les résultats, compare les prix et présente une vue unifiée des offres disponibles, éliminant ainsi le besoin de naviguer manuellement entre plusieurs sites marchands pour comparer les prix et les options.
+Technologies Suggérées : Python (FastAPI/Flask), React/Next.js, MongoDB/PostgreSQL, OpenAI API/Langchain, BeautifulSoup/Scrapy, Redis
+Thèmes Principaux : Intelligence artificielle conversationnelle, Web scraping et agrégation de données, Systèmes de recommandation, Comparaison de prix en temps réel

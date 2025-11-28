@@ -1,7 +1,7 @@
-Titre du Projet : Plateforme E-Commerce Intelligente avec Système de Recommandation Multi-Sources.
+Titre du Projet : Plateforme E-Commerce Intelligente avec Système de Recommandation Multi-Sources
 
 Description : Plateforme e-commerce centralisée intégrant un chatbot intelligent basé sur l'IA qui permet aux utilisateurs de rechercher des produits à travers différentes plateformes e-commerce simplement en fournissant une description ou un nom de produit. Le système agrège automatiquement les résultats, compare les prix et présente une vue unifiée des offres disponibles, éliminant ainsi le besoin de naviguer manuellement entre plusieurs sites marchands pour comparer les prix et les options.
 
-Technologies Suggérées : Python (FastAPI/Flask), React/Next.js, MongoDB/PostgreSQL, OpenAI API/Langchain, BeautifulSoup/Scrapy, Redis.
+Technologies Suggérées : Spring Boot, React/Next.js, MongoDB/PostgreSQL, OpenAI API/Langchain, Jsoup/Spring WebClient, Redis, Kafka
 
 Thèmes Principaux : Intelligence artificielle conversationnelle, Web scraping et agrégation de données, Systèmes de recommandation, Comparaison de prix en temps réel

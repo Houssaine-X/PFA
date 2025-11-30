@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Catalogue API Tester</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: white; text-align: center; margin-bottom: 30px; }
+        .card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        h2 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-bottom: 15px; }
+        button { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; font-size: 14px; }
+        button:hover { background: #764ba2; transform: translateY(-2px); }
+        .endpoint { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .url { font-family: 'Courier New', monospace; color: #666; margin: 5px 0; }
+        #response { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; white-space: pre-wrap; max-height: 500px; overflow-y: auto; min-height: 100px; }
+        .links { background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ffc107; }
+        .links h3 { color: #856404; margin-bottom: 10px; }
+        .links a { color: #667eea; font-weight: bold; text-decoration: none; display: block; margin: 5px 0; }
+        .links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Catalogue Microservices API Tester</h1>
+
+        <div class="links">
+            <h3>📊 Quick Access Links</h3>
+            <a href="http://localhost:8761" target="_blank">🌐 Eureka Dashboard (Port 8761)</a>
+            <a href="http://localhost:8081/h2-console" target="_blank">💾 Category H2 Console (jdbc:h2:mem:category_db)</a>
+            <a href="http://localhost:8082/h2-console" target="_blank">💾 Product H2 Console (jdbc:h2:mem:product_db)</a>
+            <a href="http://localhost:8083/h2-console" target="_blank">💾 Order H2 Console (jdbc:h2:mem:order_db)</a>
+            <p style="margin-top: 10px;"><strong>H2 Login:</strong> Username: <code>sa</code> | Password: (empty)</p>
+        </div>
+
+        <div class="card">
+            <h2>📁 Category Service (Port 8081)</h2>
+            <div class="endpoint">
+                <strong>Get All Categories</strong>
+                <div class="url">GET http://localhost:8081/api/categories</div>
+                <button onclick="fetchData('http://localhost:8081/api/categories')">📋 Fetch All</button>
+                <button onclick="createCategory()">➕ Create Sample</button>
+            </div>
+            <div class="endpoint">
+                <strong>Health Check</strong>
+                <div class="url">GET http://localhost:8081/actuator/health</div>
+                <button onclick="fetchData('http://localhost:8081/actuator/health')">❤️ Check Health</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📦 Product Service (Port 8082)</h2>
+            <div class="endpoint">
+                <strong>Get All Products</strong>
+                <div class="url">GET http://localhost:8082/api/products</div>
+                <button onclick="fetchData('http://localhost:8082/api/products')">📋 Fetch All</button>
+                <button onclick="createProduct()">➕ Create Sample</button>
+            </div>
+            <div class="endpoint">
+                <strong>Get Available Products</strong>
+                <div class="url">GET http://localhost:8082/api/products/available</div>
+                <button onclick="fetchData('http://localhost:8082/api/products/available')">✅ Fetch Available</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🛒 Order Service (Port 8083)</h2>
+            <div class="endpoint">
+                <strong>Get All Orders</strong>
+                <div class="url">GET http://localhost:8083/api/orders</div>
+                <button onclick="fetchData('http://localhost:8083/api/orders')">📋 Fetch All</button>
+                <button onclick="createOrder()">➕ Create Sample</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📄 Response Data</h2>
+            <div id="response">Click any button above to test the APIs...</div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData(url) {
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = '⏳ Loading...';
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok) {
+                    responseDiv.textContent = '✅ Success!\n\n' + JSON.stringify(data, null, 2);
+                } else {
+                    responseDiv.textContent = '❌ Error ' + response.status + '\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                responseDiv.textContent = '❌ Network Error: ' + error.message + '\n\nMake sure the service is running!';
+            }
+        }
+
+        async function createCategory() {
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = '⏳ Creating category...';
+
+            const category = {
+                nom: 'Electronics',
+                description: 'Electronic devices and accessories'
+            };
+
+            try {
+                const response = await fetch('http://localhost:8081/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(category)
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    responseDiv.textContent = '✅ Category Created!\n\n' + JSON.stringify(data, null, 2);
+                } else {
+                    responseDiv.textContent = '❌ Error ' + response.status + '\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                responseDiv.textContent = '❌ Error: ' + error.message;
+            }
+        }
+
+        async function createProduct() {
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = '⏳ Creating product...';
+
+            const product = {
+                nom: 'Laptop Dell XPS 15',
+                description: 'High-performance laptop with Intel i7',
+                prix: 1299.99,
+                stockQuantity: 15,
+                categoryId: 1,
+                disponible: true
+            };
+
+            try {
+                const response = await fetch('http://localhost:8082/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(product)
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    responseDiv.textContent = '✅ Product Created!\n\n' + JSON.stringify(data, null, 2);
+                } else {
+                    responseDiv.textContent = '❌ Error ' + response.status + '\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                responseDiv.textContent = '❌ Error: ' + error.message;
+            }
+        }
+
+        async function createOrder() {
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = '⏳ Creating order...';
+
+            const order = {
+                clientEmail: 'john.doe@example.com',
+                clientNom: 'Doe',
+                clientPrenom: 'John',
+                clientTelephone: '0612345678',
+                adresseLivraison: '123 Main Street, Paris 75001',
+                orderItems: [
+                    { productId: 1, quantity: 2 }
+                ]
+            };
+
+            try {
+                const response = await fetch('http://localhost:8083/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(order)
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    responseDiv.textContent = '✅ Order Created!\n\n' + JSON.stringify(data, null, 2);
+                } else {
+                    responseDiv.textContent = '❌ Error ' + response.status + '\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                responseDiv.textContent = '❌ Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
+

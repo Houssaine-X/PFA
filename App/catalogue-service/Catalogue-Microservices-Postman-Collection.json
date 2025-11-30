@@ -1,0 +1,662 @@
+{
+	"info": {
+		"_postman_id": "catalogue-microservices-2024",
+		"name": "Catalogue Microservices - Complete API Tests",
+		"description": "Collection complète de tests pour les microservices du catalogue\n\n**Architecture:**\n- Config Server (8888)\n- Eureka Server (8761)\n- API Gateway (8080)\n- Category Service (8081)\n- Product Service (8082)\n- Order Service (8083)\n\n**Important:** Tous les appels passent par l'API Gateway (port 8080)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Infrastructure Services",
+			"item": [
+				{
+					"name": "Config Server - Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8888/actuator/health",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8888",
+							"path": ["actuator", "health"]
+						}
+					}
+				},
+				{
+					"name": "Eureka Server - Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8761/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8761",
+							"path": [""]
+						}
+					}
+				},
+				{
+					"name": "API Gateway - Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/actuator/health",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["actuator", "health"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Category Service (via Gateway)",
+			"item": [
+				{
+					"name": "GET All Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/categories",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "categories"]
+						},
+						"description": "Récupère toutes les catégories (8 pré-chargées)"
+					}
+				},
+				{
+					"name": "GET Category by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/categories/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "categories", "1"]
+						},
+						"description": "Récupère une catégorie par son ID"
+					}
+				},
+				{
+					"name": "POST Create Category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Nouvelle Catégorie\",\n  \"description\": \"Description de test pour la démo\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/categories",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "categories"]
+						},
+						"description": "Crée une nouvelle catégorie"
+					}
+				},
+				{
+					"name": "PUT Update Category",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Catégorie Modifiée\",\n  \"description\": \"Description mise à jour\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/categories/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "categories", "1"]
+						},
+						"description": "Met à jour une catégorie existante"
+					}
+				},
+				{
+					"name": "GET Search Category by Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/categories/search?nom=Electronics",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "categories", "search"],
+							"query": [
+								{
+									"key": "nom",
+									"value": "Electronics"
+								}
+							]
+						},
+						"description": "Recherche une catégorie par nom"
+					}
+				},
+				{
+					"name": "DELETE Category",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/categories/9",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "categories", "9"]
+						},
+						"description": "Supprime une catégorie (utiliser un ID qui n'a pas de produits)"
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Product Service (via Gateway)",
+			"item": [
+				{
+					"name": "GET All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/products",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products"]
+						},
+						"description": "Récupère tous les produits (27 pré-chargés)"
+					}
+				},
+				{
+					"name": "GET Product by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/products/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products", "1"]
+						},
+						"description": "Récupère un produit par son ID"
+					}
+				},
+				{
+					"name": "POST Create Product (OpenFeign)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Nouveau Produit Test\",\n  \"description\": \"Produit créé pour la démonstration\",\n  \"prix\": 199.99,\n  \"stockQuantity\": 50,\n  \"disponible\": true,\n  \"categoryId\": 1,\n  \"imageUrl\": \"https://example.com/image.jpg\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/products",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products"]
+						},
+						"description": "⭐ OPENFEIGN: Le Product Service appelle Category Service pour valider categoryId"
+					}
+				},
+				{
+					"name": "POST Create Product - Invalid Category (OpenFeign Error)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Produit Invalide\",\n  \"description\": \"Catégorie inexistante\",\n  \"prix\": 99.99,\n  \"stockQuantity\": 10,\n  \"disponible\": true,\n  \"categoryId\": 999,\n  \"imageUrl\": \"https://example.com/image.jpg\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/products",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products"]
+						},
+						"description": "⭐ OPENFEIGN: Devrait retourner une erreur car categoryId=999 n'existe pas"
+					}
+				},
+				{
+					"name": "PUT Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Produit Modifié\",\n  \"description\": \"Description mise à jour\",\n  \"prix\": 249.99,\n  \"stockQuantity\": 75,\n  \"disponible\": true,\n  \"categoryId\": 1,\n  \"imageUrl\": \"https://example.com/updated.jpg\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/products/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products", "1"]
+						},
+						"description": "Met à jour un produit existant"
+					}
+				},
+				{
+					"name": "GET Products by Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/products/category/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products", "category", "1"]
+						},
+						"description": "Récupère tous les produits d'une catégorie"
+					}
+				},
+				{
+					"name": "PATCH Update Stock",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/products/1/stock?quantity=-5",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products", "1", "stock"],
+							"query": [
+								{
+									"key": "quantity",
+									"value": "-5"
+								}
+							]
+						},
+						"description": "Met à jour le stock d'un produit (+ pour ajouter, - pour retirer)"
+					}
+				},
+				{
+					"name": "GET Available Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/products/available",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products", "available"]
+						},
+						"description": "Récupère uniquement les produits disponibles"
+					}
+				},
+				{
+					"name": "DELETE Product",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/products/28",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products", "28"]
+						},
+						"description": "Supprime un produit"
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Order Service (via Gateway)",
+			"item": [
+				{
+					"name": "GET All Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/orders",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders"]
+						},
+						"description": "Récupère toutes les commandes"
+					}
+				},
+				{
+					"name": "GET Order by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/orders/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders", "1"]
+						},
+						"description": "Récupère une commande par son ID"
+					}
+				},
+				{
+					"name": "POST Create Order (OpenFeign)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 1,\n  \"status\": \"PENDING\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 2\n    },\n    {\n      \"productId\": 2,\n      \"quantity\": 1\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders"]
+						},
+						"description": "⭐ OPENFEIGN: Le Order Service appelle Product Service pour:\n1. Vérifier la disponibilité des produits\n2. Mettre à jour le stock\n3. Récupérer les prix pour calculer le total"
+					}
+				},
+				{
+					"name": "POST Create Order - Check Stock Update (OpenFeign)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Avant de créer la commande, vérifier le stock du produit 1",
+									"pm.sendRequest('http://localhost:8080/api/products/1', function (err, response) {",
+									"    const product = response.json();",
+									"    pm.environment.set('stockAvant', product.stockQuantity);",
+									"    console.log('Stock avant commande:', product.stockQuantity);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Après la commande, vérifier que le stock a diminué",
+									"pm.test('Stock mis à jour via OpenFeign', function() {",
+									"    pm.sendRequest('http://localhost:8080/api/products/1', function (err, response) {",
+									"        const product = response.json();",
+									"        const stockAvant = pm.environment.get('stockAvant');",
+									"        console.log('Stock après commande:', product.stockQuantity);",
+									"        pm.expect(product.stockQuantity).to.be.below(stockAvant);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 1,\n  \"status\": \"PENDING\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 3\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders"]
+						},
+						"description": "⭐ DÉMONSTRATION OPENFEIGN:\n1. Exécuter une première fois (noter le stock)\n2. Le stock du produit 1 diminue de 3 unités\n3. Vérifier avec GET Product by ID"
+					}
+				},
+				{
+					"name": "PUT Update Order",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 1,\n  \"status\": \"COMPLETED\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 2\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders", "1"]
+						},
+						"description": "Met à jour une commande existante"
+					}
+				},
+				{
+					"name": "GET Orders by User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/orders/user/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders", "user", "1"]
+						},
+						"description": "Récupère toutes les commandes d'un utilisateur"
+					}
+				},
+				{
+					"name": "GET Orders by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/orders/status/PENDING",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders", "status", "PENDING"]
+						},
+						"description": "Récupère toutes les commandes avec un statut spécifique"
+					}
+				},
+				{
+					"name": "DELETE Order",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/orders/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders", "1"]
+						},
+						"description": "Supprime une commande"
+					}
+				}
+			]
+		},
+		{
+			"name": "5. DEMO OpenFeign - Product → Category",
+			"item": [
+				{
+					"name": "STEP 1: Verify Category Exists",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/categories/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "categories", "1"]
+						},
+						"description": "Étape 1: Vérifier que la catégorie ID=1 existe"
+					}
+				},
+				{
+					"name": "STEP 2: Create Product (Success - OpenFeign)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Demo OpenFeign - Succès\",\n  \"description\": \"Product Service appelle Category Service via OpenFeign\",\n  \"prix\": 99.99,\n  \"stockQuantity\": 10,\n  \"disponible\": true,\n  \"categoryId\": 1\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/products",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products"]
+						},
+						"description": "Étape 2: Créer un produit avec categoryId=1\n✅ Succès car la catégorie existe"
+					}
+				},
+				{
+					"name": "STEP 3: Create Product (Fail - OpenFeign)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Demo OpenFeign - Échec\",\n  \"description\": \"Catégorie inexistante\",\n  \"prix\": 99.99,\n  \"stockQuantity\": 10,\n  \"disponible\": true,\n  \"categoryId\": 999\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/products",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products"]
+						},
+						"description": "Étape 3: Créer un produit avec categoryId=999\n❌ Échec car la catégorie n'existe pas\nOpenFeign retourne une erreur"
+					}
+				}
+			]
+		},
+		{
+			"name": "6. DEMO OpenFeign - Order → Product",
+			"item": [
+				{
+					"name": "STEP 1: Check Initial Stock",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/products/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products", "1"]
+						},
+						"description": "Étape 1: Noter le stockQuantity actuel du produit"
+					}
+				},
+				{
+					"name": "STEP 2: Create Order (OpenFeign Updates Stock)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 1,\n  \"status\": \"PENDING\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 5\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders"]
+						},
+						"description": "Étape 2: Créer une commande de 5 unités\n⭐ Order Service utilise OpenFeign pour:\n- Vérifier la disponibilité\n- Mettre à jour le stock (-5)"
+					}
+				},
+				{
+					"name": "STEP 3: Verify Stock Decreased",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/products/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "products", "1"]
+						},
+						"description": "Étape 3: Vérifier que le stock a diminué de 5 unités\n✅ Le stock devrait être (stock initial - 5)"
+					}
+				}
+			]
+		}
+	]
+}
+

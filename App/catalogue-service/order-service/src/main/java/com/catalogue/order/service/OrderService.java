@@ -95,8 +95,8 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderDTO> getOrdersByClientEmail(String clientEmail) {
-        List<Order> orders = orderRepository.findByClientEmail(clientEmail);
+    public List<OrderDTO> getOrdersByUserId(Long userId) {
+        List<Order> orders = orderRepository.findByUserId(userId);
         return orderMapper.toDTOList(orders);
     }
 

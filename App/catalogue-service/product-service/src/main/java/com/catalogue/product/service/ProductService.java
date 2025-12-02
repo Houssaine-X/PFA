@@ -1,6 +1,5 @@
 package com.catalogue.product.service;
 
-import com.catalogue.product.dto.CategoryDTO;
 import com.catalogue.product.dto.ProductDTO;
 import com.catalogue.product.entity.Product;
 import com.catalogue.product.mapper.ProductMapper;
@@ -9,7 +8,6 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -20,12 +18,8 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
-    private final RestTemplate restTemplate;
 
     public ProductDTO createProduct(ProductDTO productDTO) {
-        // Validate category exists by calling category-service
-        validateCategoryExists(productDTO.getCategoryId());
-
         Product product = productMapper.toEntity(productDTO);
         Product savedProduct = productRepository.save(product);
         return productMapper.toDTO(savedProduct);
@@ -45,14 +39,15 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductDTO> getProductsByCategoryId(Long categoryId) {
-        List<Product> products = productRepository.findByCategoryId(categoryId);
+    public List<ProductDTO> getProductsByCategoryName(String categoryName) {
+        List<Product> products = productRepository.findByCategoryName(categoryName);
         return productMapper.toDTOList(products);
     }
 
     @Transactional(readOnly = true)
-    public List<ProductDTO> getProductsByCategory(Long categoryId) {
-        return getProductsByCategoryId(categoryId);
+    public List<ProductDTO> searchProductsByCategory(String categoryName) {
+        List<Product> products = productRepository.findByCategoryNameContainingIgnoreCase(categoryName);
+        return productMapper.toDTOList(products);
     }
 
     @Transactional(readOnly = true)
@@ -77,10 +72,6 @@ public class ProductService {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
 
-        if (productDTO.getCategoryId() != null && !productDTO.getCategoryId().equals(existingProduct.getCategoryId())) {
-            validateCategoryExists(productDTO.getCategoryId());
-        }
-
         productMapper.updateEntityFromDTO(productDTO, existingProduct);
         Product updatedProduct = productRepository.save(existingProduct);
         return productMapper.toDTO(updatedProduct);
@@ -102,14 +93,5 @@ public class ProductService {
 
         Product updatedProduct = productRepository.save(product);
         return productMapper.toDTO(updatedProduct);
-    }
-
-    private void validateCategoryExists(Long categoryId) {
-        try {
-            String categoryServiceUrl = "http://localhost:8081/api/categories/" + categoryId;
-            restTemplate.getForObject(categoryServiceUrl, CategoryDTO.class);
-        } catch (Exception e) {
-            throw new EntityNotFoundException("Category not found with id: " + categoryId);
-        }
     }
 }

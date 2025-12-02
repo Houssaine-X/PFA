@@ -40,8 +40,11 @@ public class Product {
     @Column(nullable = false)
     private Boolean disponible = true;
 
-    @Column(name = "category_id", nullable = false)
-    private Long categoryId;
+    @Column(name = "category_name", nullable = false, length = 100)
+    private String categoryName;
+
+    @Column(name = "category_description", length = 500)
+    private String categoryDescription;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

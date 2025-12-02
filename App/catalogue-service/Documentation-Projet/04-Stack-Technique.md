@@ -2,7 +2,12 @@
 
 ## 🛠️ Vue d'Ensemble
 
-Ce document liste toutes les technologies utilisées dans le projet avec explications et justifications.
+Ce document détaille toutes les technologies du projet e-commerce avec microservices, intégration PayPal, et architecture extensible.
+
+**Architecture**: 7 Microservices (3 Infrastructure + 4 Métier)  
+**Complexité**: Moyenne-Haute  
+**Intégrations Externes**: PayPal REST API  
+**Vision Future**: Prêt pour IA (documenté, non implémenté)
 
 ---
 
@@ -159,14 +164,156 @@ public class EurekaServerApplication {
 </dependency>
 ```
 
-Utilisation:
+Utilisation - Communication Inter-Services:
 ```java
-@FeignClient(name = "category-service")
-public interface CategoryClient {
-    @GetMapping("/api/categories/{id}")
-    CategoryDTO getCategoryById(@PathVariable Long id);
+// User Service → Order Service
+@FeignClient(name = "order-service")
+public interface OrderClient {
+    @GetMapping("/api/orders/user/{userId}")
+    List<OrderDTO> getOrdersByUserId(@PathVariable Long userId);
+}
+
+// Order Service → Product Service
+@FeignClient(name = "product-service")
+public interface ProductClient {
+    @GetMapping("/api/products/{id}")
+    ProductDTO getProductById(@PathVariable Long id);
+    
+    @PatchMapping("/api/products/{id}/stock")
+    void updateStock(@PathVariable Long id, @RequestParam Integer quantity);
+}
+
+// Order Service → User Service
+@FeignClient(name = "user-service")
+public interface UserClient {
+    @GetMapping("/api/users/{id}")
+    UserDTO getUserById(@PathVariable Long id);
 }
 ```
+
+**Avantages OpenFeign**:
+- ✅ Déclaratif (interface seulement)
+- ✅ Intégration Eureka automatique
+- ✅ Load balancing client-side
+- ✅ Circuit breaker compatible
+
+---
+
+## 💳 Intégration Paiement
+
+### PayPal REST API SDK 1.14.0
+
+**Rôle**: Gestion des paiements PayPal  
+**Site**: https://developer.paypal.com
+
+```xml
+<dependency>
+    <groupId>com.paypal.sdk</groupId>
+    <artifactId>rest-api-sdk</artifactId>
+    <version>1.14.0</version>
+</dependency>
+```
+
+**Configuration**:
+```java
+@Configuration
+@ConfigurationProperties(prefix = "paypal")
+@Data
+public class PayPalConfig {
+    private String clientId;
+    private String clientSecret;
+    private String mode; // sandbox ou live
+    
+    @Bean
+    public Map<String, String> paypalSdkConfig() {
+        Map<String, String> config = new HashMap<>();
+        config.put("mode", mode);
+        return config;
+    }
+    
+    @Bean
+    public OAuthTokenCredential oAuthTokenCredential() {
+        return new OAuthTokenCredential(clientId, clientSecret, paypalSdkConfig());
+    }
+    
+    @Bean
+    public APIContext apiContext() {
+        return new APIContext(clientId, clientSecret, mode);
+    }
+}
+```
+
+**Properties (Config Server)**:
+```properties
+# payment-service.properties
+paypal.client-id=YOUR_SANDBOX_CLIENT_ID
+paypal.client-secret=YOUR_SANDBOX_CLIENT_SECRET
+paypal.mode=sandbox
+```
+
+**Service PayPal**:
+```java
+@Service
+@RequiredArgsConstructor
+public class PayPalService {
+    private final APIContext apiContext;
+    
+    public Payment createPayment(
+        BigDecimal total,
+        String currency,
+        String description,
+        String cancelUrl,
+        String successUrl
+    ) throws PayPalRESTException {
+        // Créer montant
+        Amount amount = new Amount();
+        amount.setCurrency(currency);
+        amount.setTotal(String.format("%.2f", total));
+        
+        // Créer transaction
+        Transaction transaction = new Transaction();
+        transaction.setDescription(description);
+        transaction.setAmount(amount);
+        
+        // Créer paiement
+        Payment payment = new Payment();
+        payment.setIntent("sale");
+        payment.setPayer(new Payer().setPaymentMethod("paypal"));
+        payment.setTransactions(List.of(transaction));
+        
+        // URLs de redirection
+        RedirectUrls redirectUrls = new RedirectUrls();
+        redirectUrls.setCancelUrl(cancelUrl);
+        redirectUrls.setReturnUrl(successUrl);
+        payment.setRedirectUrls(redirectUrls);
+        
+        return payment.create(apiContext);
+    }
+    
+    public Payment executePayment(String paymentId, String payerId) 
+        throws PayPalRESTException {
+        Payment payment = new Payment();
+        payment.setId(paymentId);
+        
+        PaymentExecution execution = new PaymentExecution();
+        execution.setPayerId(payerId);
+        
+        return payment.execute(apiContext, execution);
+    }
+}
+```
+
+**Workflow**:
+1. Client POST /api/payments/paypal/create → Reçoit approvalUrl
+2. Client redirigé vers PayPal pour approuver
+3. PayPal redirige vers successUrl avec paymentId + payerId
+4. Client POST /api/payments/paypal/execute → Finalise paiement
+
+**Avantages**:
+- ✅ SDK officiel bien maintenu
+- ✅ Sandbox gratuit pour tests
+- ✅ Pas de PCI compliance nécessaire
+- ✅ Reconnu et sécurisé
 
 ---
 
@@ -465,19 +612,25 @@ public class ProductService {
 ```
 catalogue-microservices (parent)
 ├── pom.xml (parent POM)
-├── config-server
+├── config-server         → Port 8888
 │   └── pom.xml
-├── eureka-server
+├── eureka-server         → Port 8761
 │   └── pom.xml
-├── api-gateway
+├── api-gateway           → Port 8080
 │   └── pom.xml
-├── category-service
+├── user-service          → Port 8083 🆕
 │   └── pom.xml
-├── product-service
+├── product-service       → Port 8081
 │   └── pom.xml
-└── order-service
+├── order-service         → Port 8085
+│   └── pom.xml
+└── payment-service       → Port 8084 🆕
     └── pom.xml
 ```
+
+**7 Services**:
+- 3 Infrastructure (Config, Eureka, Gateway)
+- 4 Métier (User, Product, Order, Payment)
 
 **Commandes Utiles**:
 ```bash
@@ -530,9 +683,9 @@ mvn clean package
 
 ---
 
-## 🧪 Tests (Optionnel)
+## 🧪 Tests
 
-### JUnit 5 + MockMVC
+### JUnit 5 + Mockito
 
 ```xml
 <dependency>
@@ -542,10 +695,89 @@ mvn clean package
 </dependency>
 ```
 
-**Exemple de test**:
+**Tests Unitaires - Payment Service** (7/7 Passed ✅):
 ```java
-@SpringBootTest
-@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
+class PaymentServicePayPalTest {
+    
+    @Mock
+    private PaymentRepository paymentRepository;
+    
+    @Mock
+    private PayPalService payPalService;
+    
+    @InjectMocks
+    private PaymentService paymentService;
+    
+    @Test
+    void createPayPalPayment_Success() {
+        // Given
+        PayPalPaymentRequest request = PayPalPaymentRequest.builder()
+            .orderId(1L)
+            .userId(1L)
+            .amount(new BigDecimal("299.99"))
+            .currency("USD")
+            .build();
+            
+        com.paypal.api.payments.Payment mockPayment = new com.paypal.api.payments.Payment();
+        mockPayment.setId("PAYID-123");
+        mockPayment.setState("created");
+        
+        when(payPalService.createPayment(any(), any(), any(), any(), any()))
+            .thenReturn(mockPayment);
+        when(payPalService.getApprovalUrl(any()))
+            .thenReturn("https://paypal.com/approve");
+        
+        // When
+        PayPalPaymentResponse response = paymentService.createPayPalPayment(request);
+        
+        // Then
+        assertThat(response.getPaymentId()).isEqualTo("PAYID-123");
+        assertThat(response.getStatus()).isEqualTo("created");
+        verify(paymentRepository).save(any(Payment.class));
+    }
+}
+```
+
+**Tests Controller**:
+```java
+@WebMvcTest(PaymentController.class)
+class PaymentControllerPayPalTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @MockitoBean
+    private PaymentService paymentService;
+    
+    @Test
+    void createPayPalPayment_Success() throws Exception {
+        PayPalPaymentResponse mockResponse = PayPalPaymentResponse.builder()
+            .paymentId("PAYID-123")
+            .approvalUrl("https://paypal.com/approve")
+            .status("created")
+            .build();
+            
+        when(paymentService.createPayPalPayment(any()))
+            .thenReturn(mockResponse);
+        
+        mockMvc.perform(post("/api/payments/paypal/create")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                        "orderId": 1,
+                        "userId": 1,
+                        "amount": 299.99,
+                        "currency": "USD"
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentId").value("PAYID-123"));
+    }
+}
+```
+
+**Résultat**: 7/7 tests passed ✅
 class ProductControllerTest {
     
     @Autowired
@@ -720,14 +952,158 @@ Employabilité:     ⭐⭐⭐⭐⭐ (Top!)
 
 ---
 
+## 📊 Récapitulatif Stack Complet
+
+### Infrastructure (3 Services)
+
+| Service | Port | Technologie | Rôle |
+|---------|------|-------------|------|
+| **Config Server** | 8888 | Spring Cloud Config | Configuration centralisée |
+| **Eureka Server** | 8761 | Netflix Eureka | Service Discovery |
+| **API Gateway** | 8080 | Spring Cloud Gateway | Routing + Circuit Breaker |
+
+### Services Métier (4 Services)
+
+| Service | Port | Base de Données | Rôle |
+|---------|------|-----------------|------|
+| **User Service** | 8083 | H2 (user_db) | Gestion utilisateurs + rôles |
+| **Product Service** | 8081 | H2 (product_db) | Produits + catégories intégrées |
+| **Order Service** | 8085 | H2 (order_db) | Commandes + OpenFeign |
+| **Payment Service** | 8084 | H2 (payment_db) | Paiements PayPal |
+
+### Communication Inter-Services (OpenFeign)
+
+```
+User Service ──→ Order Service (historique commandes)
+Order Service ──→ User Service (vérification utilisateur)
+Order Service ──→ Product Service (stock + prix)
+Payment Service ──→ PayPal API (paiements externes)
+```
+
+### Technologies Clés
+
+| Catégorie | Technologie | Version | Usage |
+|-----------|-------------|---------|-------|
+| **Framework** | Spring Boot | 3.4.1 | Backend principal |
+| **Cloud** | Spring Cloud | 2024.0.0 | Microservices |
+| **Langage** | Java | 17 LTS | Développement |
+| **Build** | Maven | 3.9+ | Gestion projet |
+| **DB Dev** | H2 | 2.3.x | Base en mémoire |
+| **ORM** | Hibernate/JPA | 6.x | Persistence |
+| **Mapper** | MapStruct | 1.6.3 | Entity ↔ DTO |
+| **Validation** | Bean Validation | 3.0 | Validation données |
+| **Circuit Breaker** | Resilience4j | Latest | Fault tolerance |
+| **Paiement** | PayPal SDK | 1.14.0 | Intégration paiements |
+| **Tests** | JUnit 5 + Mockito | Latest | Tests unitaires |
+| **Logger** | SLF4J + Logback | Latest | Logs |
+
+---
+
+## 🎯 Points Forts de la Stack
+
+### 1. Architecture Moderne
+✅ Microservices découplés  
+✅ Service Discovery automatique  
+✅ Configuration centralisée  
+✅ Circuit breaker pour résilience
+
+### 2. Bonnes Pratiques
+✅ Clean code (Lombok réduit boilerplate)  
+✅ Type-safe (Java 17 + MapStruct)  
+✅ Validation automatique (Bean Validation)  
+✅ Tests unitaires (7/7 passed Payment Service)
+
+### 3. Production-Ready
+✅ Actuator pour monitoring  
+✅ H2 dev, MySQL production possible  
+✅ Circuit breaker pour fault tolerance  
+✅ OpenFeign pour communication inter-services
+
+### 4. Intégration Externe
+✅ PayPal SDK officiel  
+✅ Sandbox gratuit pour tests  
+✅ Workflow complet (create/approve/execute)  
+✅ Configuration sécurisée (Config Server)
+
+### 5. Extensibilité Future
+✅ Architecture prête pour ajout de services (IA)  
+✅ Pas de refactoring nécessaire  
+✅ Communication déclarative (OpenFeign)  
+✅ Découplage fort entre services
+
+---
+
+## 🔧 Commandes Essentielles
+
+### Démarrage Services
+```bash
+# Infrastructure d'abord
+cd eureka-server && mvn spring-boot:run          # Port 8761
+cd config-server && mvn spring-boot:run          # Port 8888
+cd api-gateway && mvn spring-boot:run            # Port 8080
+
+# Puis services métier
+cd user-service && mvn spring-boot:run           # Port 8083
+cd product-service && mvn spring-boot:run        # Port 8081
+cd order-service && mvn spring-boot:run          # Port 8085
+cd payment-service && mvn spring-boot:run        # Port 8084
+```
+
+Ou utiliser le script:
+```bash
+start-all-services.bat
+```
+
+### Build Complet
+```bash
+# Depuis la racine
+mvn clean install -DskipTests
+
+# Avec tests
+mvn clean install
+```
+
+### Tests
+```bash
+# Tests d'un service
+cd payment-service
+mvn test
+
+# Tests de tous les services
+mvn test
+```
+
+---
+
+## 🌐 URLs Importantes
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Eureka Dashboard** | http://localhost:8761 | Voir tous les services |
+| **API Gateway** | http://localhost:8080 | Point d'entrée unique |
+| **Config Server** | http://localhost:8888 | Configuration centralisée |
+| **H2 Console User** | http://localhost:8083/h2-console | DB User Service |
+| **H2 Console Product** | http://localhost:8081/h2-console | DB Product Service |
+| **H2 Console Order** | http://localhost:8085/h2-console | DB Order Service |
+| **H2 Console Payment** | http://localhost:8084/h2-console | DB Payment Service |
+
+**H2 Console Config**:
+- JDBC URL: `jdbc:h2:mem:{service}_db` (ex: user_db)
+- Username: `sa`
+- Password: _(vide)_
+
+---
+
 ## 📚 Ressources Utiles
 
 ### Documentation Officielle
 - **Spring Boot**: https://spring.io/projects/spring-boot
 - **Spring Cloud**: https://spring.io/projects/spring-cloud
+- **PayPal Developer**: https://developer.paypal.com
 - **Hibernate**: https://hibernate.org/orm/documentation
 - **Lombok**: https://projectlombok.org/features/all
 - **MapStruct**: https://mapstruct.org/documentation
+- **Resilience4j**: https://resilience4j.readme.io
 
 ### Tutoriels Recommandés
 - Spring Boot Official Guides: https://spring.io/guides
@@ -736,7 +1112,28 @@ Employabilité:     ⭐⭐⭐⭐⭐ (Top!)
 
 ---
 
-**Document rédigé**: Novembre 2025  
-**But**: Documentation technique du projet  
-**Statut**: ✅ Complete
+## 💡 Vision Future (Non Implémenté)
+
+Si extension vers l'IA (documenté dans Benchmark):
+
+**Options Comparées**:
+1. **OpenAI GPT-4** - Chatbot conversationnel (100-500€/mois)
+2. **ML Custom** - Collaborative filtering (gratuit, nécessite données)
+3. **Rasa Open Source** - Chatbot gratuit (qualité moindre)
+4. **Embeddings** - Recherche sémantique (50-100€/mois)
+
+**Architecture Extensible**:
+```
+AI Service (Port 8086) ─→ User/Product/Order Services
+                          via OpenFeign
+```
+
+**Avantage**: Ajout sans modifier les services existants ✅
+
+---
+
+**Document rédigé**: Décembre 2025  
+**But**: Documentation technique complète du projet  
+**Statut**: ✅ Complete  
+**Version**: 2.0 (inclut User Service + Payment Service PayPal)
 

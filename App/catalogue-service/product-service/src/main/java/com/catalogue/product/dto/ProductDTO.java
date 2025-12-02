@@ -36,10 +36,12 @@ public class ProductDTO {
 
     private Boolean disponible;
 
-    @NotNull(message = "Category ID is required")
-    private Long categoryId;
+    @NotBlank(message = "Category name is required")
+    @Size(max = 100, message = "Category name must not exceed 100 characters")
+    private String categoryName;
 
-    private String categoryNom; // Fetched from category-service if needed
+    @Size(max = 500, message = "Category description must not exceed 500 characters")
+    private String categoryDescription;
 
     private Instant createdAt;
 

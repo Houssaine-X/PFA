@@ -48,9 +48,15 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<ProductDTO>> getProductsByCategory(@PathVariable Long categoryId) {
-        List<ProductDTO> products = productService.getProductsByCategory(categoryId);
+    @GetMapping("/category/{categoryName}")
+    public ResponseEntity<List<ProductDTO>> getProductsByCategory(@PathVariable String categoryName) {
+        List<ProductDTO> products = productService.getProductsByCategoryName(categoryName);
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/category/search")
+    public ResponseEntity<List<ProductDTO>> searchProductsByCategory(@RequestParam String categoryName) {
+        List<ProductDTO> products = productService.searchProductsByCategory(categoryName);
         return ResponseEntity.ok(products);
     }
 

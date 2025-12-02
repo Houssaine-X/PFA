@@ -2,9 +2,9 @@ package com.catalogue.order.dto;
 
 import com.catalogue.order.entity.OrderStatus;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,20 +26,8 @@ public class OrderDTO {
 
     private String orderNumber;
 
-    @NotBlank(message = "Client email is required")
-    @Email(message = "Email should be valid")
-    private String clientEmail;
-
-    @NotBlank(message = "Client last name is required")
-    @Size(max = 100, message = "Last name must not exceed 100 characters")
-    private String clientNom;
-
-    @NotBlank(message = "Client first name is required")
-    @Size(max = 100, message = "First name must not exceed 100 characters")
-    private String clientPrenom;
-
-    @Size(max = 20, message = "Phone number must not exceed 20 characters")
-    private String clientTelephone;
+    @NotNull(message = "User ID is required")
+    private Long userId;
 
     @NotBlank(message = "Delivery address is required")
     @Size(max = 500, message = "Address must not exceed 500 characters")

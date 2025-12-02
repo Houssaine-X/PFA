@@ -50,15 +50,21 @@ public class OrderController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long id) {
+        orderService.cancelOrder(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/order-number/{orderNumber}")
     public ResponseEntity<OrderDTO> getOrderByOrderNumber(@PathVariable String orderNumber) {
         OrderDTO order = orderService.getOrderByOrderNumber(orderNumber);
         return ResponseEntity.ok(order);
     }
 
-    @GetMapping("/client/{email}")
-    public ResponseEntity<List<OrderDTO>> getOrdersByClientEmail(@PathVariable String email) {
-        List<OrderDTO> orders = orderService.getOrdersByClientEmail(email);
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@PathVariable Long userId) {
+        List<OrderDTO> orders = orderService.getOrdersByUserId(userId);
         return ResponseEntity.ok(orders);
     }
 

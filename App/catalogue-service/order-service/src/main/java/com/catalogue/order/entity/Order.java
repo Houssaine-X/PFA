@@ -25,17 +25,8 @@ public class Order {
     @Column(nullable = false, unique = true, length = 50)
     private String orderNumber;
 
-    @Column(nullable = false, length = 100)
-    private String clientEmail;
-
-    @Column(nullable = false, length = 100)
-    private String clientNom;
-
-    @Column(nullable = false, length = 100)
-    private String clientPrenom;
-
-    @Column(length = 20)
-    private String clientTelephone;
+    @Column(nullable = false)
+    private Long userId;
 
     @Column(nullable = false, length = 500)
     private String adresseLivraison;

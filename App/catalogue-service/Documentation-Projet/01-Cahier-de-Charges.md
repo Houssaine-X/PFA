@@ -2,16 +2,16 @@
 
 ## 📋 Informations du Projet
 
-**Titre**: Plateforme E-Commerce avec Architecture Microservices  
+**Titre**: Plateforme E-Commerce avec Architecture Microservices et Paiement PayPal  
 **Type**: Projet de fin de semestre  
-**Durée**: 1-2 mois (Octobre-Novembre 2025)  
+**Durée**: 2 mois (Octobre-Décembre 2025)  
 **Cours**: Architecture Logicielle / Systèmes Distribués
 
 ---
 
 ## 🎯 Objectif
 
-Développer une plateforme e-commerce en utilisant une **architecture microservices**, démontrant la maîtrise des concepts d'architecture distribuée appris en cours.
+Développer une plateforme e-commerce complète en utilisant une **architecture microservices moderne**, démontrant la maîtrise des concepts d'architecture distribuée, de l'intégration de services externes (PayPal), et préparant une évolution vers l'Intelligence Artificielle.
 
 ---
 
@@ -29,34 +29,58 @@ Ce projet met en pratique:
 
 ## ✨ Fonctionnalités Implémentées
 
-### 1. Gestion des Catégories (Category Service)
-- Créer une catégorie
-- Lister toutes les catégories
-- Consulter une catégorie par ID
-- Modifier une catégorie
-- Supprimer une catégorie
+### 1. Gestion des Utilisateurs (User Service) 🆕
+- **Rôles**: CLIENT et ADMIN
+- Créer un utilisateur (inscription)
+- Authentifier un utilisateur
+- Consulter un utilisateur par ID ou email
+- Modifier les informations d'un utilisateur
+- Activer/Désactiver un compte utilisateur
+- Filtrer utilisateurs par rôle
+- **Consulter l'historique des commandes d'un utilisateur** (via OpenFeign)
 
 ### 2. Gestion des Produits (Product Service)
-- Créer un produit (associé à une catégorie)
+- Créer un produit avec **catégorie intégrée** (plus de service séparé)
 - Lister tous les produits
 - Filtrer produits par catégorie
+- Rechercher des produits par mot-clé
 - Consulter un produit par ID
-- Modifier un produit (prix, stock, etc.)
+- Modifier un produit (prix, stock, catégorie)
 - Supprimer un produit
 - Gérer le stock et la disponibilité
+- **Catégorie embarquée** (categoryName, categoryDescription)
 
 ### 3. Gestion des Commandes (Order Service)
 - Créer une commande avec plusieurs produits
+- **Référence utilisateur par userId** (pas de duplication de données)
 - Lister toutes les commandes
-- Consulter une commande par ID
+- Consulter une commande par ID ou numéro
+- Filtrer commandes par utilisateur
+- Filtrer commandes par statut
+- Filtrer commandes par période
 - Modifier le statut d'une commande
-- Annuler une commande
+- Annuler une commande (restaure le stock)
 - Calcul automatique du montant total
+- **Vérification utilisateur** via OpenFeign
+- **Mise à jour stock automatique** via OpenFeign
 
-### 4. Infrastructure
+### 4. Gestion des Paiements (Payment Service) 🆕💳
+- **Intégration PayPal complète**
+- Créer un paiement PayPal
+- Exécuter un paiement après approbation utilisateur
+- Annuler un paiement
+- Consulter l'historique des paiements
+- Filtrer paiements par commande
+- Filtrer paiements par utilisateur
+- Filtrer paiements par statut
+- **États**: PENDING, COMPLETED, FAILED, CANCELLED, REFUNDED
+
+### 5. Infrastructure
 - **Eureka Server**: Enregistrement et découverte des services
 - **Config Server**: Configuration centralisée
-- **API Gateway**: Point d'entrée unique avec routing
+- **API Gateway**: Point d'entrée unique avec routing et circuit breaker
+- **OpenFeign**: Communication inter-services
+- **Resilience4j**: Circuit breaker et fallback
 
 ---
 
@@ -70,7 +94,9 @@ Ce projet met en pratique:
                    ↓
          ┌─────────────────┐
          │  API Gateway    │ Port 8080
-         │  (Routing)      │
+         │  (Routing +     │
+         │  Circuit        │
+         │  Breaker)       │
          └────────┬────────┘
                   │
          ┌────────┴────────┐
@@ -82,20 +108,36 @@ Ce projet met en pratique:
     └────────┘        └────────┘
      Port 8761        Port 8888
          │
-    ┌────┴────┬────────────┬────────────┐
-    │         │            │            │
-    ↓         ↓            ↓            ↓
-┌─────────┬─────────┬──────────┐
-│Category │ Product │  Order   │
-│Service  │ Service │ Service  │
-│Port 8081│Port 8082│Port 8083 │
-└────┬────┴────┬────┴────┬─────┘
-     │         │         │
-     ↓         ↓         ↓
-┌─────────┬─────────┬──────────┐
-│  H2 DB  │  H2 DB  │   H2 DB  │
-│category │ product │  order   │
-└─────────┴─────────┴──────────┘
+    ┌────┴────┬────────────┬────────────┬──────────┐
+    │         │            │            │          │
+    ↓         ↓            ↓            ↓          ↓
+┌─────────┬─────────┬──────────┬──────────┐
+│  User   │ Product │  Order   │ Payment  │
+│ Service │ Service │ Service  │ Service  │
+│Port 8083│Port 8081│Port 8085 │Port 8084 │
+└────┬────┴────┬────┴────┬─────┴────┬─────┘
+     │         │         │          │
+     ↓         ↓         ↓          ↓
+┌─────────┬─────────┬──────────┬──────────┐
+│  H2 DB  │  H2 DB  │   H2 DB  │  H2 DB   │
+│  user   │ product │  order   │ payment  │
+└─────────┴─────────┴──────────┴──────────┘
+                                    │
+                                    ↓
+                            ┌──────────────┐
+                            │  PayPal API  │
+                            │   (External) │
+                            └──────────────┘
+```
+
+### Communication Inter-Services (OpenFeign)
+
+```
+User Service ←──────→ Order Service
+                          ↓
+                    Product Service
+                          
+Payment Service ────→ PayPal API (REST)
 ```
 
 ---
@@ -332,23 +374,47 @@ Si le projet devait être étendu, voici des pistes:
 Le projet est considéré réussi si:
 
 ### Fonctionnel
-- [ ] Les 6 microservices démarrent sans erreur
-- [ ] Tous les services apparaissent dans Eureka
-- [ ] Toutes les APIs REST fonctionnent
-- [ ] Les communications inter-services marchent
-- [ ] Les données persistent en base
+- [x] Les 7 microservices démarrent sans erreur
+- [x] Tous les services apparaissent dans Eureka Dashboard
+- [x] Toutes les APIs REST fonctionnent correctement
+- [x] Les communications inter-services OpenFeign marchent
+- [x] Les données persistent en base H2
+- [x] L'intégration PayPal fonctionne (sandbox)
+- [x] Les circuit breakers s'activent en cas d'erreur
 
 ### Technique
-- [ ] Code propre et structuré
-- [ ] Gestion des erreurs implémentée
-- [ ] Circuit breakers fonctionnels
-- [ ] Documentation à jour
+- [x] Code propre et bien structuré (packages logiques)
+- [x] Gestion des erreurs implémentée partout
+- [x] Circuit breakers fonctionnels (Resilience4j)
+- [x] Documentation à jour et complète
+- [x] Tests unitaires pour Payment Service (7/7 passed)
+- [x] Collection Postman exhaustive
 
 ### Démonstration
-Pouvoir montrer:
-1. Eureka Dashboard avec tous les services
-2. Création d'une catégorie via Postman
-3. Création d'un produit lié à cette catégorie
+Pouvoir montrer en direct:
+1. ✅ Eureka Dashboard avec tous les services enregistrés
+2. ✅ Création d'un utilisateur CLIENT via Postman
+3. ✅ Création d'un produit avec catégorie via Postman
+4. ✅ Création d'une commande (OpenFeign → Product Service pour stock)
+5. ✅ Création d'un paiement PayPal
+6. ✅ Consultation de l'approvalUrl PayPal
+7. ✅ Historique des commandes d'un utilisateur (OpenFeign User → Order)
+8. ✅ Console H2 avec les données de chaque service
+
+### Architecture
+- [x] Séparation claire des responsabilités
+- [x] Chaque service a sa propre base de données
+- [x] Communication via API REST (pas de couplage DB)
+- [x] Configuration centralisée fonctionnelle
+- [x] Service Discovery opérationnel
+
+### Documentation
+- [x] Cahier de charges complet
+- [x] Diagrammes d'architecture (Mermaid)
+- [x] Diagrammes de classes détaillés
+- [x] Guide d'intégration PayPal
+- [x] Collection Postman documentée
+- [x] README avec instructions de démarrage
 4. Création d'une commande avec plusieurs produits
 5. H2 Console montrant les données
 

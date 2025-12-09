@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "catalogue-microservices-2024-updated",
 		"name": "Catalogue Microservices - Complete API Tests (Updated)",
-		"description": "Collection complète de tests pour les microservices du catalogue\n\n**Architecture:**\n- Config Server (8888)\n- Eureka Server (8761)\n- API Gateway (8080)\n- User Service (8083)\n- Product Service (8081)\n- Order Service (8085)\n- Payment Service (8084)\n\n**Important:** Tous les appels passent par l'API Gateway (port 8080)\n\n**Nouveautés:**\n- User Service avec gestion des rôles (CLIENT/ADMIN)\n- Payment Service avec intégration PayPal\n- Order Service refactorisé (userId au lieu des détails client)\n- Product Service avec catégories intégrées",
+		"description": "Collection complète de tests pour les microservices du catalogue\n\n**Architecture:**\n- Config Server (8888)\n- Eureka Server (8761)\n- API Gateway (8080)\n- Product Service (8081)\n- User Service (8082)\n- Order Service (8083)\n- Payment Service (8084)\n\n**Important:** Tous les appels passent par l'API Gateway (port 8080)\n\n**Nouveautés:**\n- User Service avec gestion des rôles (CLIENT/ADMIN)\n- Payment Service avec intégration PayPal et support de multiples méthodes (CREDIT_CARD, BANK_TRANSFER, CASH_ON_DELIVERY)\n- Order Service refactorisé (userId au lieu des détails client)\n- Product Service avec catégories intégrées\n\n**Note:** PayPal est désactivé par défaut en développement. Pour l'activer, voir payment-service/PAYPAL-SETUP.md",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [

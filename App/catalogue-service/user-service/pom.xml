@@ -36,19 +36,22 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- Eureka Client -->
+        <!-- Spring Cloud: Eureka Client -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
 
-        <!-- Apache HttpClient 5 for Eureka transport (required for Spring Cloud 2024.0.0) -->
+        <!-- Eureka Jersey3 Client for Spring Boot 3.x / Jakarta EE compatibility -->
+
+
+        <!-- Spring Cloud: Load Balancer -->
         <dependency>
-            <groupId>org.apache.httpcomponents.client5</groupId>
-            <artifactId>httpclient5</artifactId>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
 
-        <!-- Config Client -->
+        <!-- Spring Cloud: Config Client -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-config</artifactId>
@@ -58,7 +61,7 @@
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
         </dependency>
 
-        <!-- For calling other microservices -->
+        <!-- Spring Cloud: OpenFeign for inter-service communication -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>

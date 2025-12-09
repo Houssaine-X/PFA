@@ -3,8 +3,8 @@ package com.catalogue.payment.service;
 import com.paypal.api.payments.*;
 import com.paypal.base.rest.APIContext;
 import com.paypal.base.rest.PayPalRESTException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -13,11 +13,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class PayPalService {
 
-    private final APIContext apiContext;
+    private APIContext apiContext;
+
+    public PayPalService() {
+        log.info("PayPalService initialized without APIContext");
+    }
+
+    @Autowired(required = false)
+    public void setApiContext(APIContext apiContext) {
+        this.apiContext = apiContext;
+        if (apiContext != null) {
+            log.info("PayPal APIContext configured successfully");
+        } else {
+            log.warn("PayPal APIContext is not available. PayPal integration is disabled.");
+        }
+    }
+
+    private void checkPayPalAvailability() {
+        if (apiContext == null) {
+            throw new IllegalStateException("PayPal integration is not configured. Please configure valid PayPal credentials.");
+        }
+    }
 
     /**
      * Create a PayPal payment
@@ -36,6 +55,7 @@ public class PayPalService {
             String cancelUrl,
             String successUrl
     ) throws PayPalRESTException {
+        checkPayPalAvailability();
         log.info("Creating PayPal payment for amount: {} {}", total, currency);
 
         Amount amount = new Amount();
@@ -76,6 +96,7 @@ public class PayPalService {
      * @return Executed Payment object
      */
     public Payment executePayment(String paymentId, String payerId) throws PayPalRESTException {
+        checkPayPalAvailability();
         log.info("Executing PayPal payment: {} for payer: {}", paymentId, payerId);
 
         Payment payment = new Payment();
@@ -97,6 +118,7 @@ public class PayPalService {
      * @return Payment object
      */
     public Payment getPaymentDetails(String paymentId) throws PayPalRESTException {
+        checkPayPalAvailability();
         log.info("Fetching PayPal payment details for ID: {}", paymentId);
         return Payment.get(apiContext, paymentId);
     }
@@ -113,6 +135,15 @@ public class PayPalService {
                 .findFirst()
                 .map(Links::getHref)
                 .orElse(null);
+    }
+
+    /**
+     * Check if PayPal integration is available
+     *
+     * @return true if PayPal is configured and available
+     */
+    public boolean isPayPalAvailable() {
+        return apiContext != null;
     }
 }
 

@@ -1,18 +1,18 @@
--- Insert sample orders
-INSERT INTO orders (order_number, client_email, client_nom, client_prenom, client_telephone, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
-    ('ORD-2025-001', 'john.doe@example.com', 'Doe', 'John', '0612345678', '123 Main Street, Paris 75001', 'DELIVERED', 1379.98, DATEADD('DAY', -10, CURRENT_TIMESTAMP), DATEADD('DAY', -3, CURRENT_TIMESTAMP));
+-- Insert sample orders (using user_id instead of individual client fields)
+INSERT INTO orders (order_number, user_id, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
+    ('ORD-2025-001', 1, '123 Main Street, Paris 75001', 'DELIVERED', 1379.98, DATEADD('DAY', -10, CURRENT_TIMESTAMP), DATEADD('DAY', -3, CURRENT_TIMESTAMP));
 
-INSERT INTO orders (order_number, client_email, client_nom, client_prenom, client_telephone, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
-    ('ORD-2025-002', 'alice.smith@example.com', 'Smith', 'Alice', '0623456789', '456 Oak Avenue, Lyon 69001', 'SHIPPED', 2199.00, DATEADD('DAY', -5, CURRENT_TIMESTAMP), DATEADD('DAY', -2, CURRENT_TIMESTAMP));
+INSERT INTO orders (order_number, user_id, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
+    ('ORD-2025-002', 2, '456 Oak Avenue, Lyon 69001', 'SHIPPED', 2199.00, DATEADD('DAY', -5, CURRENT_TIMESTAMP), DATEADD('DAY', -2, CURRENT_TIMESTAMP));
 
-INSERT INTO orders (order_number, client_email, client_nom, client_prenom, client_telephone, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
-    ('ORD-2025-003', 'bob.martin@example.com', 'Martin', 'Bob', '0634567890', '789 Pine Road, Marseille 13001', 'CONFIRMED', 1644.47, DATEADD('DAY', -3, CURRENT_TIMESTAMP), DATEADD('DAY', -2, CURRENT_TIMESTAMP));
+INSERT INTO orders (order_number, user_id, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
+    ('ORD-2025-003', 3, '789 Pine Road, Marseille 13001', 'CONFIRMED', 1644.47, DATEADD('DAY', -3, CURRENT_TIMESTAMP), DATEADD('DAY', -2, CURRENT_TIMESTAMP));
 
-INSERT INTO orders (order_number, client_email, client_nom, client_prenom, client_telephone, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
-    ('ORD-2025-004', 'emma.wilson@example.com', 'Wilson', 'Emma', '0645678901', '321 Elm Street, Toulouse 31000', 'PENDING', 699.00, DATEADD('DAY', -1, CURRENT_TIMESTAMP), DATEADD('DAY', -1, CURRENT_TIMESTAMP));
+INSERT INTO orders (order_number, user_id, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
+    ('ORD-2025-004', 4, '321 Elm Street, Toulouse 31000', 'PENDING', 699.00, DATEADD('DAY', -1, CURRENT_TIMESTAMP), DATEADD('DAY', -1, CURRENT_TIMESTAMP));
 
-INSERT INTO orders (order_number, client_email, client_nom, client_prenom, client_telephone, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
-    ('ORD-2025-005', 'david.brown@example.com', 'Brown', 'David', '0656789012', '654 Maple Drive, Nice 06000', 'CANCELLED', 499.99, DATEADD('DAY', -7, CURRENT_TIMESTAMP), DATEADD('DAY', -6, CURRENT_TIMESTAMP));
+INSERT INTO orders (order_number, user_id, adresse_livraison, status, montant_total, created_at, updated_at) VALUES
+    ('ORD-2025-005', 5, '654 Maple Drive, Nice 06000', 'CANCELLED', 499.99, DATEADD('DAY', -7, CURRENT_TIMESTAMP), DATEADD('DAY', -6, CURRENT_TIMESTAMP));
 
 -- Insert order items for ORD-2025-001 (John Doe - Laptop + Mouse)
 INSERT INTO order_items (order_id, product_id, quantity, prix_unitaire, sous_total) VALUES (1, 3, 1, 1299.99, 1299.99);

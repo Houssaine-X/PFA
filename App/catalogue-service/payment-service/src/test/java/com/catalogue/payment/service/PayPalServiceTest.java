@@ -30,7 +30,8 @@ class PayPalServiceTest {
 
     @BeforeEach
     void setUp() {
-        payPalService = new PayPalService(apiContext);
+        payPalService = new PayPalService();
+        payPalService.setApiContext(apiContext);
     }
 
     @Test

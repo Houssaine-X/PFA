@@ -42,11 +42,7 @@
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
 
-        <!-- Apache HttpClient 5 for Eureka transport (required for Spring Cloud 2024.0.0) -->
-        <dependency>
-            <groupId>org.apache.httpcomponents.client5</groupId>
-            <artifactId>httpclient5</artifactId>
-        </dependency>
+        <!-- Eureka Jersey3 Client for Spring Boot 3.x / Jakarta EE compatibility -->
 
         <!-- Config Client -->
         <dependency>

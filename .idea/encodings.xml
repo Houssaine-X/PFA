@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/App/catalogue-service/api-gateway/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/App/catalogue-service/config-server/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/App/catalogue-service/eureka-server/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/App/catalogue-service/order-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/App/catalogue-service/payment-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/App/catalogue-service/product-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/App/catalogue-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/App/catalogue-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/App/catalogue-service/user-service/src/main/java" charset="UTF-8" />
+  </component>
+</project>

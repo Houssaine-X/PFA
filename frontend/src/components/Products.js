@@ -49,14 +49,14 @@ const Products = () => {
 
     // Filter by category
     if (selectedCategory !== 'ALL') {
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         p.categoryName?.toUpperCase() === selectedCategory.toUpperCase()
       );
     }
 
     // Filter by source (marketplace)
     if (selectedSource !== 'ALL') {
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         (p.source || 'INTERNAL').toUpperCase() === selectedSource.toUpperCase()
       );
     }
@@ -100,7 +100,12 @@ const Products = () => {
       <div className="products-header">
         <h1>Our Products</h1>
         <div className="cart-summary">
-          🛒 Cart: {cart.reduce((sum, item) => sum + item.quantity, 0)} items
+          <svg className="cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="9" cy="21" r="1"/>
+            <circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <span>Cart: {cart.reduce((sum, item) => sum + item.quantity, 0)} items</span>
         </div>
       </div>
 
@@ -113,12 +118,15 @@ const Products = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
         />
-        <span className="search-icon">🔍</span>
+        <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
       </div>
 
       {/* Source Filter (Marketplaces) */}
       <div className="filter-section">
-        <h3 className="filter-title">🌐 Marketplace:</h3>
+        <h3 className="filter-title">Marketplace:</h3>
         <div className="source-filter">
           {sources.map(source => (
             <button
@@ -126,7 +134,7 @@ const Products = () => {
               className={`source-btn ${selectedSource === source ? 'active' : ''}`}
               onClick={() => setSelectedSource(source)}
             >
-              {getSourceIcon(source)} {source}
+              {source}
             </button>
           ))}
         </div>
@@ -134,7 +142,7 @@ const Products = () => {
 
       {/* Category Filter */}
       <div className="filter-section">
-        <h3 className="filter-title">📁 Category:</h3>
+        <h3 className="filter-title">Category:</h3>
         <div className="category-filter">
           {categories.map(category => (
             <button
@@ -168,14 +176,18 @@ const Products = () => {
                       <img src={product.imageUrl} alt={product.nom} />
                     ) : (
                       <div className="placeholder-image">
-                        {getCategoryIcon(product.categoryName)}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                          <circle cx="8.5" cy="8.5" r="1.5"/>
+                          <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                        <span>No Image</span>
                       </div>
                     )}
                     {product.stockQuantity > 0 && product.stockQuantity < 10 && (
-                      <span className="badge-stock">Only {product.stockQuantity} left!</span>
+                      <span className="badge-stock">Only {product.stockQuantity} left</span>
                     )}
                     <span className="source-tag">
-                      {getSourceIcon(product.source || 'INTERNAL')}
                       {product.source || 'Internal'}
                     </span>
                   </div>
@@ -209,33 +221,6 @@ const Products = () => {
       )}
     </div>
   );
-};
-
-// Helper function
-const getCategoryIcon = (category) => {
-  const icons = {
-    'ELECTRONICS': '💻',
-    'CLOTHING': '👕',
-    'BOOKS': '📚',
-    'HOME': '🏠',
-    'SPORTS': '⚽',
-    'TOYS': '🧸',
-    'FOOD': '🍔',
-    'BEAUTY': '💄'
-  };
-  return icons[category?.toUpperCase()] || '📦';
-};
-
-const getSourceIcon = (source) => {
-  const icons = {
-    'INTERNAL': '🏪',
-    'AMAZON': '📦',
-    'EBAY': '🛒',
-    'WALMART': '🏬',
-    'ALL': '🌐',
-    'EXTERNAL': '🌐'
-  };
-  return icons[source?.toUpperCase()] || '🏪';
 };
 
 export default Products;

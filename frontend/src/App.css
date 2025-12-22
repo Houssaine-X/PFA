@@ -24,18 +24,6 @@ body {
   background: #f5f7fa;
 }
 
-.app-footer {
-  background: #2c3e50;
-  color: white;
-  text-align: center;
-  padding: 20px;
-  margin-top: 40px;
-}
-
-.app-footer p {
-  margin: 0;
-  font-size: 0.95rem;
-}
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;

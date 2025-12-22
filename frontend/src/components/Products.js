@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { productService } from '../services/api';
+import { notify } from './NotificationContext';
 import './Products.css';
 
 const Products = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedSource, setSelectedSource] = useState('ALL');
-  const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -78,35 +79,46 @@ const Products = () => {
 
   const addToCart = (product) => {
     if (product.stockQuantity === 0) {
-      alert('This product is out of stock!');
+      notify.warning('This product is out of stock!');
       return;
     }
 
-    const existingItem = cart.find(item => item.id === product.id);
-    if (existingItem) {
-      setCart(cart.map(item =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
+    // Get existing cart from localStorage
+    const savedCart = localStorage.getItem('cart');
+    const cart = savedCart ? JSON.parse(savedCart) : [];
+
+    // Check if product already in cart
+    const existingItemIndex = cart.findIndex(item => item.productId === product.id);
+
+    if (existingItemIndex >= 0) {
+      // Update quantity
+      cart[existingItemIndex].quantity += 1;
+      notify.success(`${product.nom} quantity updated in cart!`);
     } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+      // Add new item
+      cart.push({
+        productId: product.id,
+        quantity: 1
+      });
+      notify.success(`${product.nom} added to cart!`);
     }
-    alert(`${product.nom} added to cart!`);
+
+    // Save to localStorage
+    localStorage.setItem('cart', JSON.stringify(cart));
   };
 
   return (
     <div className="products-container">
       <div className="products-header">
         <h1>Our Products</h1>
-        <div className="cart-summary">
+        <button className="cart-btn" onClick={() => navigate('/cart')}>
           <svg className="cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="9" cy="21" r="1"/>
             <circle cx="20" cy="21" r="1"/>
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
           </svg>
-          <span>Cart: {cart.reduce((sum, item) => sum + item.quantity, 0)} items</span>
-        </div>
+          View Cart
+        </button>
       </div>
 
       {/* Search Bar */}
@@ -171,7 +183,7 @@ const Products = () => {
             ) : (
               products.map(product => (
                 <div key={product.id} className="product-card">
-                  <div className="product-image">
+                  <div className="product-image" onClick={() => navigate(`/product/${product.id}`)}>
                     {product.imageUrl ? (
                       <img src={product.imageUrl} alt={product.nom} />
                     ) : (
@@ -192,7 +204,7 @@ const Products = () => {
                     </span>
                   </div>
                   <div className="product-info">
-                    <h3>{product.nom}</h3>
+                    <h3 onClick={() => navigate(`/product/${product.id}`)}>{product.nom}</h3>
                     <p className="product-description">
                       {product.description || 'No description available'}
                     </p>

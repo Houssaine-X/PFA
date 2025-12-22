@@ -39,12 +39,21 @@ const Navigation = () => {
               Products
             </Link>
           </li>
-          <li className={isActive('/orders')}>
-            <Link to="/orders">
+          <li className={isActive('/cart')}>
+            <Link to="/cart">
               <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="9" cy="21" r="1"/>
                 <circle cx="20" cy="21" r="1"/>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+              </svg>
+              Cart
+            </Link>
+          </li>
+          <li className={isActive('/orders')}>
+            <Link to="/orders">
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 2v4H3v16h18V6h-6V2H9z"/>
+                <path d="M9 6h6"/>
               </svg>
               Orders
             </Link>
@@ -62,6 +71,13 @@ const Navigation = () => {
           </li>
         </ul>
         <div className="nav-auth">
+          <Link to="/profile" className="nav-auth-link">
+            <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width: '18px', height: '18px', marginRight: '4px'}}>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Profile
+          </Link>
           <Link to="/login" className="nav-auth-link">Sign In</Link>
           <Link to="/signup" className="nav-auth-btn">Sign Up</Link>
         </div>

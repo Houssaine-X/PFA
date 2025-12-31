@@ -41,8 +41,30 @@ Plateforme e-commerce centralisée avec architecture microservices, permettant l
 
 ## Démarrage Rapide
 
+### Option 1: Backend + Frontend (Recommandé)
+
+**1. Démarrer le Backend:**
+```bash
+cd App\catalogue-service
+start-all-services.bat
+```
+Attendez 2-3 minutes que tous les services démarrent.
+
+**2. Vérifier Eureka:**
+Ouvrez http://localhost:8761 - Tous les services doivent être UP.
+
+**3. Démarrer le Frontend:**
+```bash
+cd frontend
+start-frontend.bat
+```
+L'application s'ouvrira automatiquement à http://localhost:3000
+
+### Option 2: Backend Seulement
+
 ### 1. Lancer Tous les Services
 ```bash
+cd App\catalogue-service
 start-all-services.bat
 ```
 Démarre automatiquement tous les services dans le bon ordre.

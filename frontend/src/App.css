@@ -9,7 +9,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #f5f7fa;
 }
 
 .App {
@@ -21,7 +20,6 @@ body {
 .main-content {
   flex: 1;
   padding: 20px 0;
-  background: #f5f7fa;
 }
 
 

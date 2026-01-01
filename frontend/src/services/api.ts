@@ -95,11 +95,13 @@ export const paymentService = {
   getPaymentById: (id: string) => api.get<Payment>(`/payments/${id}`),
 };
 
-// eBay Products API
+// eBay Products API - uses API Gateway only (no direct service fallback due to CORS)
 export const ebayService = {
   getFeaturedProducts: () => api.get<EbayItem[]>('/products/ebay/featured'),
-  searchProducts: (query: string, limit: number = 10) => api.get<EbayItem[]>(`/products/ebay/search?q=${encodeURIComponent(query)}&limit=${limit}`),
-  getProductsByCategory: (categoryName: string, limit: number = 10) => api.get<EbayItem[]>(`/products/ebay/category/${encodeURIComponent(categoryName)}?limit=${limit}`),
+  searchProducts: (query: string, limit: number = 10) =>
+    api.get<EbayItem[]>(`/products/ebay/search?q=${encodeURIComponent(query)}&limit=${limit}`),
+  getProductsByCategory: (categoryName: string, limit: number = 10) =>
+    api.get<EbayItem[]>(`/products/ebay/category/${encodeURIComponent(categoryName)}?limit=${limit}`),
 };
 
 // Helper function to transform eBay item to internal product format

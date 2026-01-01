@@ -68,19 +68,25 @@ const Products: React.FC = () => {
       let ebayProducts: Product[] = [];
       try {
         setEbayLoading(true);
+        console.log('Fetching eBay products...');
         const ebayResponse = await ebayService.getFeaturedProducts();
-        // The API returns EbayItem[] directly based on api.ts definition, but let's check if it's wrapped
-        // Based on previous JS code it seemed to be wrapped in itemSummaries, but api.ts says EbayItem[]
-        // Let's assume api.ts return type is correct for the response data structure
+        console.log('eBay API raw response:', ebayResponse);
         const responseData = ebayResponse.data as any;
+        console.log('eBay response data:', responseData);
 
         if (Array.isArray(responseData)) {
+             console.log('Response is array with', responseData.length, 'items');
              ebayProducts = responseData.map(transformEbayItem);
         } else if (responseData?.itemSummaries) {
+             console.log('Response has itemSummaries with', responseData.itemSummaries.length, 'items');
              ebayProducts = responseData.itemSummaries.map(transformEbayItem);
+        } else {
+             console.warn('Unexpected eBay response format:', responseData);
         }
-      } catch (ebayErr) {
-        console.warn('Could not fetch eBay products:', ebayErr);
+        console.log('Transformed eBay products:', ebayProducts);
+      } catch (ebayErr: any) {
+        console.error('Could not fetch eBay products:', ebayErr);
+        console.error('eBay error details:', ebayErr?.response?.data || ebayErr?.message);
         // Don't fail the whole request if eBay fails
       } finally {
         setEbayLoading(false);

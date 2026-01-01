@@ -39,5 +39,13 @@ public class FallbackController {
         response.put("message", "Please try again later");
         return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
     }
+
+    @GetMapping("/user")
+    public ResponseEntity<Map<String, String>> userFallback() {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "User Service is currently unavailable");
+        response.put("message", "Please try again later");
+        return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
+    }
 }
 

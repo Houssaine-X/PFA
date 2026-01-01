@@ -5,43 +5,43 @@ echo ========================================
 echo.
 
 echo [1/7] Starting Config Server (Port 8888)...
-start "Config Server" cmd /k "cd C:\Users\houss\catalogue-service\config-server && mvn spring-boot:run"
+start "Config Server" cmd /k "cd C:\Users\houss\Documents\PFA\App\catalogue-service\config-server && mvn spring-boot:run"
 echo Waiting 20 seconds for Config Server to start...
 timeout /t 20 /nobreak >nul
 echo.
 
 echo [2/7] Starting Eureka Server (Port 8761)...
-start "Eureka Server" cmd /k "cd C:\Users\houss\catalogue-service\eureka-server && mvn spring-boot:run"
+start "Eureka Server" cmd /k "cd C:\Users\houss\Documents\PFA\App\catalogue-service\eureka-server && mvn spring-boot:run"
 echo Waiting 30 seconds for Eureka Server to start...
 timeout /t 30 /nobreak >nul
 echo.
 
 echo [3/7] Starting API Gateway (Port 8080)...
-start "API Gateway" cmd /k "cd C:\Users\houss\catalogue-service\api-gateway && mvn spring-boot:run"
+start "API Gateway" cmd /k "cd C:\Users\houss\Documents\PFA\App\catalogue-service\api-gateway && mvn spring-boot:run"
 echo Waiting 25 seconds...
 timeout /t 25 /nobreak >nul
 echo.
 
 echo [4/7] Starting Product Service (Port 8082)...
-start "Product Service" cmd /k "cd C:\Users\houss\catalogue-service\product-service && mvn spring-boot:run"
+start "Product Service" cmd /k "cd C:\Users\houss\Documents\PFA\App\catalogue-service\product-service && mvn spring-boot:run"
 echo Waiting 20 seconds...
 timeout /t 20 /nobreak >nul
 echo.
 
 echo [5/7] Starting Order Service (Port 8083)...
-start "Order Service" cmd /k "cd C:\Users\houss\catalogue-service\order-service && mvn spring-boot:run"
+start "Order Service" cmd /k "cd C:\Users\houss\Documents\PFA\App\catalogue-service\order-service && mvn spring-boot:run"
 echo Waiting 20 seconds...
 timeout /t 20 /nobreak >nul
 echo.
 
 echo [6/7] Starting Payment Service (Port 8084)...
-start "Payment Service" cmd /k "cd C:\Users\houss\catalogue-service\payment-service && mvn spring-boot:run"
+start "Payment Service" cmd /k "cd C:\Users\houss\Documents\PFA\App\catalogue-service\payment-service && mvn spring-boot:run"
 echo Waiting 20 seconds...
 timeout /t 20 /nobreak >nul
 echo.
 
 echo [7/7] Starting User Service (Port 8085)...
-start "User Service" cmd /k "cd C:\Users\houss\catalogue-service\user-service && mvn spring-boot:run"
+start "User Service" cmd /k "cd C:\Users\houss\Documents\PFA\App\catalogue-service\user-service && mvn spring-boot:run"
 echo.
 
 echo ========================================

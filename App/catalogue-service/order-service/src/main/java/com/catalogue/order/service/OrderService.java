@@ -22,6 +22,7 @@ import java.util.UUID;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -29,11 +30,24 @@ public class OrderService {
     private final ProductClient productClient;
 
     public OrderDTO createOrder(OrderDTO orderDTO) {
+        log.info("Creating order for user: {}", orderDTO.getUserId());
         // Validate products and calculate totals
         BigDecimal montantTotal = BigDecimal.ZERO;
 
         for (OrderItemDTO itemDTO : orderDTO.getOrderItems()) {
-            ProductDTO product = productClient.getProductById(itemDTO.getProductId());
+            log.info("Processing item: productId={}, quantity={}", itemDTO.getProductId(), itemDTO.getQuantity());
+            ProductDTO product;
+            try {
+                product = productClient.getProductById(itemDTO.getProductId());
+                log.info("Product fetched: {}", product);
+            } catch (Exception e) {
+                log.error("Failed to fetch product with id: {}", itemDTO.getProductId(), e);
+                throw new IllegalStateException("Failed to fetch product information", e);
+            }
+            
+            if (product == null) {
+                throw new IllegalStateException("Product not found with id: " + itemDTO.getProductId());
+            }
 
             if (!product.getDisponible()) {
                 throw new IllegalStateException("Product " + product.getNom() + " is not available");

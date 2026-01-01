@@ -6,15 +6,37 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Gateway Route Configuration
- * Defines routing rules for microservices
+ * Gateway Route Configuration - DISABLED
+ *
+ * Routes are now defined in application.properties instead.
+ * Having routes in both Java config and properties causes duplicate routing
+ * and duplicate CORS headers.
+ *
+ * Keep this file for reference.
  */
-@Configuration
+// @Configuration  // DISABLED - routes defined in application.properties
 public class GatewayConfig {
 
-    @Bean
+    // @Bean  // DISABLED - routes defined in application.properties
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
+                // Auth Service Route (User Service)
+                .route("auth-service", r -> r
+                        .path("/api/auth/**")
+                        .filters(f -> f
+                                .addRequestHeader("X-Gateway-Route", "auth-service"))
+                        .uri("lb://user-service"))
+
+                // User Service Route
+                .route("user-service", r -> r
+                        .path("/api/users/**")
+                        .filters(f -> f
+                                .addRequestHeader("X-Gateway-Route", "user-service")
+                                .circuitBreaker(config -> config
+                                        .setName("userServiceCircuitBreaker")
+                                        .setFallbackUri("forward:/fallback/user")))
+                        .uri("lb://user-service"))
+
                 // Category Service Route
                 .route("category-service", r -> r
                         .path("/api/categories/**")

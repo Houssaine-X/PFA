@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,42 +24,49 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         log.info("GET /api/users - Fetching all users");
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @userService.isCurrentUser(#id, authentication.name)")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         log.info("GET /api/users/{} - Fetching user by id", id);
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @GetMapping("/email/{email}")
+    @PreAuthorize("hasRole('ADMIN') or #email == authentication.name")
     public ResponseEntity<UserDTO> getUserByEmail(@PathVariable String email) {
         log.info("GET /api/users/email/{} - Fetching user by email", email);
         return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 
     @GetMapping("/role/{role}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDTO>> getUsersByRole(@PathVariable UserRole role) {
         log.info("GET /api/users/role/{} - Fetching users by role", role);
         return ResponseEntity.ok(userService.getUsersByRole(role));
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDTO>> getActiveUsers() {
         log.info("GET /api/users/active - Fetching active users");
         return ResponseEntity.ok(userService.getActiveUsers());
     }
 
     @GetMapping("/active/role/{role}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDTO>> getActiveUsersByRole(@PathVariable UserRole role) {
         log.info("GET /api/users/active/role/{} - Fetching active users by role", role);
         return ResponseEntity.ok(userService.getActiveUsersByRole(role));
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserDTO userDTO) {
         log.info("POST /api/users - Creating new user");
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -65,6 +74,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @userService.isCurrentUser(#id, authentication.name)")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id,
                                                @Valid @RequestBody UserDTO userDTO) {
         log.info("PUT /api/users/{} - Updating user", id);
@@ -72,6 +82,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         log.info("DELETE /api/users/{} - Deleting user", id);
         userService.deleteUser(id);
@@ -79,18 +90,21 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> deactivateUser(@PathVariable Long id) {
         log.info("PATCH /api/users/{}/deactivate - Deactivating user", id);
         return ResponseEntity.ok(userService.deactivateUser(id));
     }
 
     @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> activateUser(@PathVariable Long id) {
         log.info("PATCH /api/users/{}/activate - Activating user", id);
         return ResponseEntity.ok(userService.activateUser(id));
     }
 
     @GetMapping("/{id}/orders")
+    @PreAuthorize("hasRole('ADMIN') or @userService.isCurrentUser(#id, authentication.name)")
     public ResponseEntity<List<OrderDTO>> getUserOrders(@PathVariable Long id) {
         log.info("GET /api/users/{}/orders - Fetching orders for user", id);
         return ResponseEntity.ok(userService.getUserOrders(id));

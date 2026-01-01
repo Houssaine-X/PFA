@@ -80,7 +80,7 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @PatchMapping("/{id}/stock")
+    @PutMapping("/{id}/stock")
     public ResponseEntity<ProductDTO> updateStock(@PathVariable Long id, @RequestParam Integer quantity) {
         ProductDTO updated = productService.updateStock(id, quantity);
         return ResponseEntity.ok(updated);

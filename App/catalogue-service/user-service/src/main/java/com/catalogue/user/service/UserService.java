@@ -146,5 +146,17 @@ public class UserService {
         // Fetch orders from Order Service via Feign
         return orderClient.getOrdersByUserId(userId);
     }
+
+    /**
+     * Check if the given user ID belongs to the currently authenticated user
+     * Used for authorization checks in @PreAuthorize annotations
+     */
+    @Transactional(readOnly = true)
+    public boolean isCurrentUser(Long userId, String email) {
+        log.debug("Checking if user {} is current user with email: {}", userId, email);
+        return userRepository.findById(userId)
+                .map(user -> user.getEmail().equals(email))
+                .orElse(false);
+    }
 }
 

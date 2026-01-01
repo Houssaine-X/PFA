@@ -124,26 +124,24 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div
       onClick={onClick}
       className="group bg-white rounded-2xl p-4 cursor-pointer border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-300 flex flex-col h-full"
     >
       <div className="relative aspect-square mb-4 overflow-hidden rounded-xl bg-gray-50">
-        {product.imageUrl ? (
+        {product.imageUrl && !imgError ? (
           <img
             src={product.imageUrl}
             alt={product.nom}
             className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.onerror = null;
-              target.src = '/placeholder-image.svg'; // Fallback
-            }}
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
               <circle cx="8.5" cy="8.5" r="1.5"/>
               <polyline points="21 15 16 10 5 21"/>
@@ -159,8 +157,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
         )}
 
         {/* Source Badge */}
-        <span className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-medium px-2 py-1 rounded-md shadow-sm border border-gray-100">
-          {product.source || 'Internal'}
+        <span className={`absolute bottom-2 left-2 backdrop-blur-sm text-xs font-medium px-2 py-1 rounded-md shadow-sm border ${
+          product.source === 'EBAY' 
+            ? 'bg-blue-500/90 text-white border-blue-400' 
+            : 'bg-white/90 text-gray-700 border-gray-100'
+        }`}>
+          {product.source === 'EBAY' ? '🛒 eBay' : product.source || 'Internal'}
         </span>
       </div>
 
@@ -174,7 +176,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
 
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
           <span className="text-lg font-bold text-gray-900">
-            ${product.prix.toFixed(2)}
+            {product.currency === 'USD' ? '$' : product.currency || '$'}{product.prix?.toFixed(2) || '0.00'}
           </span>
           <button className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

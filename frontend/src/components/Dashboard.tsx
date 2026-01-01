@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { productService } from '../services/api';
+import { productService, ebayService, transformEbayItem } from '../services/api';
 import { Product } from '../types';
 import InfiniteMarquee from './InfiniteMarquee';
 import BentoGrid from './BentoGrid';
@@ -18,9 +18,35 @@ const Dashboard: React.FC = () => {
   const fetchFeaturedProducts = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await productService.getAllProducts();
-      // Get more products for the carousel (e.g., 24 products)
-      setFeaturedProducts(response.data.slice(0, 24));
+
+      // Fetch internal products
+      const internalResponse = await productService.getAllProducts();
+      const internalProducts = internalResponse.data.map((p: any) => ({
+        ...p,
+        source: p.source || 'INTERNAL'
+      }));
+
+      // Fetch eBay products
+      let ebayProducts: Product[] = [];
+      try {
+        const ebayResponse = await ebayService.getFeaturedProducts();
+        const responseData = ebayResponse.data as any;
+
+        if (Array.isArray(responseData)) {
+          ebayProducts = responseData.map(transformEbayItem);
+        } else if (responseData?.itemSummaries) {
+          ebayProducts = responseData.itemSummaries.map(transformEbayItem);
+        }
+      } catch (ebayErr) {
+        console.warn('Could not fetch eBay products for carousel:', ebayErr);
+      }
+
+      // Combine products - mix internal and eBay for variety
+      const combined = [...internalProducts, ...ebayProducts];
+      // Shuffle to mix sources
+      const shuffled = combined.sort(() => Math.random() - 0.5);
+      // Get products for the carousel (e.g., 24 products)
+      setFeaturedProducts(shuffled.slice(0, 24));
     } catch (err) {
       console.error('Error fetching products:', err);
     } finally {

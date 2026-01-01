@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
-import { productService } from '../services/api';
+import { productService, ebayService, transformEbayItem } from '../services/api';
 
 const InfiniteMarquee: React.FC = () => {
   const navigate = useNavigate();
@@ -11,9 +11,34 @@ const InfiniteMarquee: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await productService.getAllProducts();
-        // Get enough products for the marquee
-        setProducts(response.data.slice(0, 20));
+        // Fetch internal products
+        const internalResponse = await productService.getAllProducts();
+        const internalProducts = internalResponse.data.map((p: any) => ({
+          ...p,
+          source: p.source || 'INTERNAL'
+        }));
+
+        // Fetch eBay products
+        let ebayProducts: Product[] = [];
+        try {
+          const ebayResponse = await ebayService.getFeaturedProducts();
+          const responseData = ebayResponse.data as any;
+
+          if (Array.isArray(responseData)) {
+            ebayProducts = responseData.map(transformEbayItem);
+          } else if (responseData?.itemSummaries) {
+            ebayProducts = responseData.itemSummaries.map(transformEbayItem);
+          }
+        } catch (ebayErr) {
+          console.warn('Could not fetch eBay products for marquee:', ebayErr);
+        }
+
+        // Combine and shuffle products for variety
+        const allProducts = [...internalProducts, ...ebayProducts];
+        const shuffled = allProducts.sort(() => Math.random() - 0.5);
+
+        // Get enough products for the marquee (up to 20)
+        setProducts(shuffled.slice(0, 20));
       } catch (error) {
         console.error('Error fetching products for marquee:', error);
       } finally {
@@ -72,26 +97,27 @@ interface MarqueeCardProps {
 }
 
 const MarqueeCard: React.FC<MarqueeCardProps> = ({ product, onClick }) => {
+  const [imgError, setImgError] = useState(false);
+
+  // Fallback placeholder as data URI
+  const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
+
   return (
     <div
       onClick={onClick}
-      className="inline-block w-[200px] h-[280px] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer transition-transform hover:scale-105 hover:shadow-md flex-shrink-0"
+      className="inline-block w-[200px] h-[280px] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer transition-transform hover:scale-105 hover:shadow-md flex-shrink-0"
     >
-      <div className="h-[180px] w-full p-4 bg-gray-50 flex items-center justify-center relative">
-        {product.imageUrl ? (
+      <div className="h-[180px] w-full m-3 rounded-xl bg-gray-50 flex items-center justify-center relative overflow-hidden" style={{ width: 'calc(100% - 24px)' }}>
+        {product.imageUrl && !imgError ? (
           <img
             src={product.imageUrl}
             alt={product.nom}
-            className="max-w-full max-h-full object-contain mix-blend-multiply"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.onerror = null;
-              target.src = '/placeholder-image.svg';
-            }}
+            className="max-w-full max-h-full object-contain mix-blend-multiply rounded-lg"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
               <circle cx="8.5" cy="8.5" r="1.5"/>
               <polyline points="21 15 16 10 5 21"/>
@@ -100,13 +126,17 @@ const MarqueeCard: React.FC<MarqueeCardProps> = ({ product, onClick }) => {
         )}
 
         {/* Source Badge */}
-        <span className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-medium px-2 py-0.5 rounded-md shadow-sm border border-gray-100">
-          {product.source || 'Internal'}
+        <span className={`absolute bottom-2 left-2 backdrop-blur-sm text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm border ${
+          product.source === 'EBAY' 
+            ? 'bg-blue-500/90 text-white border-blue-400' 
+            : 'bg-white/90 text-gray-700 border-gray-100'
+        }`}>
+          {product.source === 'EBAY' ? '🛒 eBay' : product.source || 'Internal'}
         </span>
       </div>
-      <div className="p-4 flex flex-col h-[100px]">
+      <div className="px-4 pb-4 flex flex-col h-[76px]">
         <h3 className="font-semibold text-gray-900 truncate text-sm mb-1">{product.nom}</h3>
-        <p className="text-xs text-gray-500 truncate mb-2">{product.categoryName || 'Product'}</p>
+        <p className="text-xs text-gray-500 line-clamp-2">{product.categoryName || product.description || 'Product'}</p>
       </div>
     </div>
   );

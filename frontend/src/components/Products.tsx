@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { productService, ebayService, transformEbayItem } from '../services/api';
 import { useAuth } from './AuthContext';
@@ -20,6 +20,7 @@ const Products: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const formRef = useRef<HTMLDivElement>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -41,6 +42,10 @@ const Products: React.FC = () => {
     imageUrl: '',
     source: 'INTERNAL'
   });
+
+  // Delete confirmation modal state
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   useEffect(() => {
     // Check if category was passed from Dashboard
@@ -266,16 +271,32 @@ const Products: React.FC = () => {
     }
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await productService.deleteProduct(productId);
-        notify.success('Product deleted successfully!');
-        fetchProducts();
-      } catch (err: any) {
-        notify.error('Failed to delete product: ' + (err.response?.data?.message || err.message));
-      }
+  // Open delete confirmation modal
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
+    setShowDeleteModal(true);
+  };
+
+  // Confirm delete
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+
+    try {
+      await productService.deleteProduct(productToDelete.id);
+      notify.success('Product deleted successfully!');
+      fetchProducts();
+    } catch (err: any) {
+      notify.error('Failed to delete product: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setShowDeleteModal(false);
+      setProductToDelete(null);
     }
+  };
+
+  // Cancel delete
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setProductToDelete(null);
   };
 
   return (
@@ -285,8 +306,26 @@ const Products: React.FC = () => {
         <div className="flex items-center gap-4">
           {isAdmin && (
             <button
-              className="flex items-center gap-2 px-6 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-full font-semibold hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all duration-300 shadow-sm"
-              onClick={() => setShowProductForm(!showProductForm)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-white/80 backdrop-blur-sm text-gray-700 border border-white/20 rounded-full font-semibold hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all duration-300 shadow-sm"
+              onClick={() => {
+                if (showProductForm) {
+                  // If form is open, reset everything when closing
+                  resetProductForm();
+                } else {
+                  // If form is closed, open it fresh for adding
+                  setEditingProduct(null);
+                  setProductFormData({
+                    nom: '',
+                    description: '',
+                    prix: '',
+                    stockQuantity: '',
+                    categoryName: '',
+                    imageUrl: '',
+                    source: 'INTERNAL'
+                  });
+                  setShowProductForm(true);
+                }
+              }}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="12" y1="5" x2="12" y2="19"/>
@@ -311,7 +350,7 @@ const Products: React.FC = () => {
 
       {/* Admin Product Form */}
       {isAdmin && showProductForm && (
-        <div className="bg-white rounded-2xl p-8 mb-10 shadow-lg border border-gray-100">
+        <div ref={formRef} className="bg-white rounded-2xl p-8 mb-10 shadow-lg border border-gray-100">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">{editingProduct ? 'Edit Product' : 'Create New Product'}</h2>
           <form onSubmit={handleSubmitProduct} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -417,7 +456,7 @@ const Products: React.FC = () => {
           placeholder="Search products across all marketplaces..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-6 pr-14 py-4 bg-white border border-gray-200 rounded-full text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          className="w-full pl-6 pr-14 py-4 bg-white/80 backdrop-blur-sm border border-white/20 rounded-full text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
         />
         <svg className="absolute right-6 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="11" cy="11" r="8"/>
@@ -501,7 +540,12 @@ const Products: React.FC = () => {
                     product={product}
                     isAdmin={isAdmin}
                     onEdit={handleEditProduct}
-                    onDelete={handleDeleteProduct}
+                    onDelete={(productId) => {
+                      const productToRemove = products.find(p => p.id === productId);
+                      if (productToRemove) {
+                        handleDeleteClick(productToRemove);
+                      }
+                    }}
                     onAddToCart={addToCart}
                     onClick={handleProductClick}
                   />
@@ -510,6 +554,57 @@ const Products: React.FC = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && productToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handleCancelDelete}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 animate-in fade-in zoom-in duration-200 border border-white/20">
+            {/* Warning Icon */}
+            <div className="w-16 h-16 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+            </div>
+
+            {/* Content */}
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">Delete Product</h3>
+            <p className="text-gray-600 text-center mb-2">
+              Are you sure you want to delete this product?
+            </p>
+            <p className="text-gray-900 font-semibold text-center mb-6 px-4 py-2 bg-gray-100 rounded-lg">
+              "{productToDelete.nom}"
+            </p>
+            <p className="text-sm text-red-600 text-center mb-6">
+              This action cannot be undone.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={handleCancelDelete}
+                className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

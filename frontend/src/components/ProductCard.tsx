@@ -32,7 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div
-      className={`group bg-white rounded-[20px] overflow-hidden transition-all duration-300 border border-black/5 flex flex-col h-full relative cursor-pointer hover:-translate-y-2 hover:shadow-lg hover:border-black/10 ${isEbayProduct ? 'ring-2 ring-[#0064D2]/10' : ''}`}
+      className={`group bg-white/80 backdrop-blur-sm rounded-[20px] overflow-hidden transition-all duration-300 border border-white/20 shadow-sm flex flex-col h-full relative cursor-pointer hover:-translate-y-2 hover:shadow-xl hover:border-white/40 ${isEbayProduct ? 'ring-2 ring-[#0064D2]/10' : ''}`}
       onClick={handleCardClick}
     >
 

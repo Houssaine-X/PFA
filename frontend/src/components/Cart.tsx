@@ -176,7 +176,7 @@ const Cart: React.FC = () => {
             ))}
           </div>
 
-          <div className="bg-white p-8 rounded-[32px] shadow-lg border border-black/5 sticky top-24">
+          <div className="bg-white/80 backdrop-blur-sm p-8 rounded-[32px] shadow-lg border border-white/20 sticky top-24">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
             <div className="flex justify-between mb-4 text-gray-600">
               <span>Subtotal ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</span>

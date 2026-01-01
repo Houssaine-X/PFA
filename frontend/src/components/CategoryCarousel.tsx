@@ -123,7 +123,7 @@ const CategoryCarousel: React.FC = () => {
               className="text-center transition-transform duration-300 cursor-pointer hover:-translate-y-2"
               onClick={() => handleProductClick(product.id)}
             >
-              <div className="w-[220px] h-[220px] rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.12)] bg-white flex items-center justify-center">
+              <div className="w-[220px] h-[220px] rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.12)] bg-white/80 backdrop-blur-sm flex items-center justify-center">
                 {product.imageUrl ? (
                   <img
                     src={product.imageUrl}

@@ -263,7 +263,7 @@ const Orders: React.FC = () => {
           </div>
         ) : (
           orders.map(order => (
-            <div key={order.id} className="bg-white rounded-3xl p-6 shadow-sm border border-black/5 hover:shadow-md transition-shadow">
+            <div key={order.id} className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-sm border border-white/20 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-6 pb-6 border-b border-gray-100">
                 <div>
                   <div className="text-lg font-bold text-gray-900 mb-1">Order #{order.orderNumber || order.id}</div>

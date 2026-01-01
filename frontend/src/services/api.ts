@@ -98,9 +98,9 @@ export const paymentService = {
 // eBay Products API - uses API Gateway only (no direct service fallback due to CORS)
 export const ebayService = {
   getFeaturedProducts: () => api.get<EbayItem[]>('/products/ebay/featured'),
-  searchProducts: (query: string, limit: number = 10) =>
+  searchProducts: (query: string, limit: number = 50) =>
     api.get<EbayItem[]>(`/products/ebay/search?q=${encodeURIComponent(query)}&limit=${limit}`),
-  getProductsByCategory: (categoryName: string, limit: number = 10) =>
+  getProductsByCategory: (categoryName: string, limit: number = 50) =>
     api.get<EbayItem[]>(`/products/ebay/category/${encodeURIComponent(categoryName)}?limit=${limit}`),
 };
 

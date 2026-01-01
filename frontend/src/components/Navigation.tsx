@@ -19,7 +19,7 @@ const Navigation: React.FC = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 h-16 flex items-center transition-all duration-300 border-b border-black/5 backdrop-blur-md bg-white/70">
+    <nav className="sticky top-0 z-50 h-16 flex items-center transition-all duration-300 border-b border-white/20 backdrop-blur-md bg-white/60 supports-[backdrop-filter]:bg-white/60">
       <div className="container mx-auto px-4 flex justify-between items-center w-full">
         <div className="flex-shrink-0">
           <Link to="/">
@@ -29,17 +29,40 @@ const Navigation: React.FC = () => {
         
         <ul className="hidden md:flex list-none gap-8 m-0 p-0">
           <li>
-            <Link to="/" className={`no-underline text-sm font-medium transition-colors duration-200 ${isActive('/')}`}>Home</Link>
+            <Link to="/" className={`no-underline text-sm font-medium transition-colors duration-200 ${isActive('/')} flex items-center gap-1`}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              Home
+            </Link>
           </li>
           <li>
-            <Link to="/products" className={`no-underline text-sm font-medium transition-colors duration-200 ${isActive('/products')}`}>Store</Link>
+            <Link to="/products" className={`no-underline text-sm font-medium transition-colors duration-200 ${isActive('/products')} flex items-center gap-1`}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+              Store
+            </Link>
           </li>
           {isAuthenticated && (
             <>
               {isAdmin && (
-                <li>
-                  <Link to="/users" className={`no-underline text-sm font-medium transition-colors duration-200 ${isActive('/users')}`}>Users</Link>
-                </li>
+                <>
+                  <li>
+                    <Link to="/users" className={`no-underline text-sm font-medium transition-colors duration-200 ${isActive('/users')} flex items-center gap-1`}>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                      </svg>
+                      Users
+                    </Link>
+                  </li>
+                </>
               )}
             </>
           )}

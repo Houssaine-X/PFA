@@ -233,7 +233,7 @@ export const getRecommendations = async (userQuery: string, aiParams?: AIQueryPa
       try {
         // Use AI's searchTerms first, then category, then fallback to user query
         const ebaySearchQuery = aiParams?.searchTerms || parsedQuery.category || userQuery.split(' ').slice(0, 3).join(' ');
-        const ebayResponse = await ebayService.searchProducts(ebaySearchQuery, 10);
+        const ebayResponse = await ebayService.searchProducts(ebaySearchQuery, 50);
         const responseData = ebayResponse.data as any;
 
         if (Array.isArray(responseData)) {
@@ -289,8 +289,8 @@ export const getRecommendations = async (userQuery: string, aiParams?: AIQueryPa
       allProducts.sort((a, b) => (b.prix || 0) - (a.prix || 0));
     }
 
-    // Limit results
-    const recommendedProducts = allProducts.slice(0, 8);
+    // Return all filtered products (display component will handle pagination)
+    const recommendedProducts = allProducts;
 
     // Generate comparison if requested or if we have products from multiple sources
     const comparison = (parsedQuery.isComparison ||
@@ -327,10 +327,10 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ product, onClic
   return (
     <div
       onClick={onClick}
-      className={`flex gap-3 p-3 bg-white rounded-lg border cursor-pointer transition-all ${
+      className={`flex gap-3 p-3 bg-white/80 backdrop-blur-sm rounded-lg border cursor-pointer transition-all ${
         highlight === 'cheapest' 
-          ? 'border-green-300 bg-green-50 ring-1 ring-green-200' 
-          : 'border-gray-100 hover:border-blue-200 hover:shadow-sm'
+          ? 'border-green-300 bg-green-50/50 ring-1 ring-green-200' 
+          : 'border-white/20 hover:border-white/40 hover:shadow-sm'
       }`}
     >
       <div className="w-14 h-14 rounded-lg bg-gray-50 overflow-hidden flex-shrink-0">
@@ -379,10 +379,14 @@ interface ProductRecommendationProps {
   onProductClick: (productId: string) => void;
 }
 
+const INITIAL_PRODUCTS_COUNT = 3;
+
 export const ProductRecommendationDisplay: React.FC<ProductRecommendationProps> = ({
   recommendation,
   onProductClick
 }) => {
+  const [showAll, setShowAll] = useState(false);
+
   if (recommendation.products.length === 0) {
     return (
       <div className="p-3 bg-gray-50 rounded-lg">
@@ -392,6 +396,10 @@ export const ProductRecommendationDisplay: React.FC<ProductRecommendationProps> 
   }
 
   const { comparison } = recommendation;
+  const displayedProducts = showAll
+    ? recommendation.products
+    : recommendation.products.slice(0, INITIAL_PRODUCTS_COUNT);
+  const hasMoreProducts = recommendation.products.length > INITIAL_PRODUCTS_COUNT;
 
   return (
     <div className="space-y-3">
@@ -462,8 +470,8 @@ export const ProductRecommendationDisplay: React.FC<ProductRecommendationProps> 
       )}
 
       {/* Product Cards */}
-      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-        {recommendation.products.map((product, idx) => (
+      <div className={`space-y-2 ${showAll ? 'max-h-[400px]' : ''} overflow-y-auto pr-1`}>
+        {displayedProducts.map((product, idx) => (
           <RecommendationCard
             key={product.id}
             product={product}
@@ -472,6 +480,30 @@ export const ProductRecommendationDisplay: React.FC<ProductRecommendationProps> 
           />
         ))}
       </div>
+
+      {/* View More Button */}
+      {hasMoreProducts && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          {showAll ? (
+            <>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 15l-6-6-6 6"/>
+              </svg>
+              Show Less
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+              View More ({recommendation.products.length - INITIAL_PRODUCTS_COUNT} more products)
+            </>
+          )}
+        </button>
+      )}
 
       {recommendation.tips.length > 0 && (
         <div className="mt-3 p-3 bg-blue-50 rounded-lg">

@@ -75,7 +75,7 @@ const BentoGrid: React.FC = () => {
         {categories.map((category) => (
           <div 
             key={category.id}
-            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out shadow-md hover:shadow-xl hover:scale-[1.02] group ${getImageClass(category.size)}`}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out shadow-md hover:shadow-xl hover:scale-[1.02] group border border-white/20 ${getImageClass(category.size)}`}
             onClick={() => navigate(category.link)}
           >
             <img

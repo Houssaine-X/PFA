@@ -85,7 +85,7 @@ const Notification: React.FC<NotificationProps> = ({ message, type, onClose, dur
   };
 
   return (
-    <div className={`fixed top-5 right-5 min-w-[320px] max-w-[400px] p-4 px-5 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] flex items-center gap-3 z-[10000] animate-slideInRight border-l-4 ${getTypeStyles()}`}>
+    <div className={`fixed top-5 right-5 min-w-[320px] max-w-[400px] p-4 px-5 bg-white/90 backdrop-blur-md rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] flex items-center gap-3 z-[10000] animate-slideInRight border-l-4 border border-white/20 ${getTypeStyles()}`}>
       <div className={`flex-shrink-0 w-6 h-6 ${getIconColor()}`}>
         {getIcon()}
       </div>

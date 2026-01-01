@@ -209,7 +209,7 @@ const Users: React.FC = () => {
           </div>
         ) : (
           users.map(user => (
-            <div key={user.id} className="bg-white p-6 rounded-3xl shadow-sm border border-black/5 hover:shadow-md transition-all hover:-translate-y-1">
+            <div key={user.id} className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl shadow-sm border border-white/20 hover:shadow-md transition-all hover:-translate-y-1">
               <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl text-white text-2xl font-bold mb-4 mx-auto shadow-md">
                 {user.firstName?.charAt(0)?.toUpperCase() || '?'}
               </div>

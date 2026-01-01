@@ -12,7 +12,7 @@ const HeroSection: React.FC = () => {
           alt="Premium Lifestyle" 
           className="w-full h-full object-cover object-center transition-transform duration-[10000ms] ease-linear group-hover:scale-105"
         />
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-white/95 via-white/70 to-transparent"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-[#f8fafc]/95 via-[#f8fafc]/70 to-transparent"></div>
       </div>
       
       <div className="relative z-10 container mx-auto px-10 w-full max-w-[1600px]">

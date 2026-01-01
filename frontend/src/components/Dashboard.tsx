@@ -54,15 +54,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleProductClick = (): void => {
-    navigate('/products');
-  };
-
-
-  const handleShopNow = (): void => {
-    navigate('/products');
-  };
-
   return (
     <div className="max-w-[1400px] mx-auto p-0">
       <InfiniteMarquee />
@@ -74,14 +65,12 @@ const Dashboard: React.FC = () => {
         <FeaturedCarousel products={featuredProducts} />
       )}
 
-      <BentoGrid />
-
       {/* Features Section */}
-      <div className="bg-white py-20 border-t border-gray-100">
+      <div className="bg-white/60 backdrop-blur-sm py-20 border-t border-white/20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
             <div className="flex flex-col items-center text-center group">
-              <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50/50 text-blue-600 flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white shadow-sm">
                 <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/>
                   <path d="m21 21-4.35-4.35"/>
@@ -92,7 +81,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex flex-col items-center text-center group">
-              <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white">
+              <div className="w-16 h-16 rounded-2xl bg-purple-50/50 text-purple-600 flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white shadow-sm">
                 <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="1" x2="12" y2="23"/>
                   <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -103,7 +92,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex flex-col items-center text-center group">
-              <div className="w-16 h-16 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:bg-green-600 group-hover:text-white">
+              <div className="w-16 h-16 rounded-2xl bg-green-50/50 text-green-600 flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:bg-green-600 group-hover:text-white shadow-sm">
                 <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
                   <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
@@ -114,7 +103,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex flex-col items-center text-center group">
-              <div className="w-16 h-16 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:bg-orange-600 group-hover:text-white">
+              <div className="w-16 h-16 rounded-2xl bg-orange-50/50 text-orange-600 flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:bg-orange-600 group-hover:text-white shadow-sm">
                 <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                 </svg>
@@ -125,6 +114,8 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <BentoGrid />
     </div>
   );
 };

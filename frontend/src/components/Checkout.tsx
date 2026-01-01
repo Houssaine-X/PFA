@@ -330,11 +330,11 @@ const Checkout: React.FC = () => {
           </form>
         </div>
 
-        <div className="bg-gray-50 p-8 rounded-3xl border border-gray-200 sticky top-24">
+        <div className="bg-white/60 backdrop-blur-sm p-8 rounded-3xl border border-white/20 sticky top-24">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
           <div className="flex flex-col gap-4 mb-6 max-h-[400px] overflow-y-auto pr-2">
             {cartItems.map(item => (
-              <div key={item.id} className="flex gap-4 bg-white p-3 rounded-xl border border-gray-100">
+              <div key={item.id} className="flex gap-4 bg-white/50 p-3 rounded-xl border border-white/20">
                 <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
                   {item.imageUrl ? (
                     <img src={item.imageUrl} alt={item.nom} className="w-full h-full object-contain" />

@@ -1,24 +1,19 @@
-import { Product } from '../types';
+import { Product, EbayItem } from '../types';
+import { productService, ebayService, transformEbayItem } from './api';
 
 // AI Service Configuration
-// You can use OpenAI, or free alternatives like:
-// - Groq (free tier): https://groq.com
-// - Together AI: https://together.ai
-// - Local LLM via Ollama: http://localhost:11434
-
 interface AIConfig {
-  provider: 'openai' | 'groq' | 'ollama' | 'mock';
-  apiKey?: string;
-  baseUrl?: string;
-  model?: string;
+  provider: 'openai' | 'groq' | 'ollama';
+  apiKey: string;
+  baseUrl: string;
+  model: string;
 }
 
-// Default configuration - change this based on your preference
 const AI_CONFIG: AIConfig = {
-  provider: 'groq', // Using Groq as it has a generous free tier
-  apiKey: process.env.REACT_APP_AI_API_KEY || '', // Set in .env file
-  baseUrl: 'https://api.groq.com/openai/v1',
-  model: 'llama-3.1-8b-instant', // Fast and free on Groq
+  provider: 'groq',
+  apiKey: process.env.REACT_APP_AI_API_KEY || '',
+  baseUrl: process.env.REACT_APP_AI_BASE_URL || 'https://api.groq.com/openai/v1',
+  model: process.env.REACT_APP_AI_MODEL || 'llama-3.3-70b-versatile',
 };
 
 interface ChatMessage {
@@ -26,239 +21,495 @@ interface ChatMessage {
   content: string;
 }
 
-interface AIResponse {
+export interface AIResponse {
   message: string;
-  productQuery?: {
-    category?: string;
-    searchTerms?: string;
-    keywords?: string[];
-    pricePreference?: 'cheap' | 'expensive' | 'any';
-    maxPrice?: number;
-    wantsComparison?: boolean;
+  products: Product[];
+  analysis?: ProductAnalysis;
+}
+
+export interface ProductAnalysis {
+  bestValue?: ProductInsight;
+  cheapest?: ProductInsight;
+  premium?: ProductInsight;
+  priceRange: { min: number; max: number; avg: number };
+  recommendation: string;
+  comparison?: {
+    internalAvg: number;
+    ebayAvg: number;
+    verdict: string;
   };
 }
 
-// System prompt for the shopping assistant
-const SYSTEM_PROMPT = `You are a friendly AI shopping assistant for a marketplace that sells products from an internal catalog and eBay. 
-
-Your capabilities:
-- Help users find products by category (beauty, electronics, clothing, sports, home)
-- Compare prices between internal store and eBay
-- Recommend bio/organic/natural products
-- Find budget-friendly or premium options
-
-When users ask about products, respond naturally and extract their intent. Always be helpful, concise, and friendly.
-
-IMPORTANT: When the user asks about products, you MUST include a JSON block at the end of your response in this format:
-\`\`\`json
-{"category": "electronics", "searchTerms": "laptop notebook computer", "keywords": ["gaming", "portable"], "pricePreference": "cheap", "maxPrice": 1500, "wantsComparison": true}
-\`\`\`
-
-Fields explanation:
-- category: One of: beauty, electronics, clothing, sports, home
-- searchTerms: SPECIFIC product type the user wants (e.g., "laptop", "phone", "headphones", "skincare cream"). This is crucial for filtering!
-- keywords: Additional attributes (bio, organic, gaming, portable, premium, etc.)
-- pricePreference: cheap, expensive, or any
-- maxPrice: Maximum budget if mentioned (number or null)
-- wantsComparison: true if user wants to compare prices
-
-Examples:
-- "I want a laptop under $1000" → searchTerms: "laptop notebook", maxPrice: 1000
-- "Show me organic face cream" → searchTerms: "face cream skincare", keywords: ["organic", "bio"]
-- "Best gaming headphones" → searchTerms: "headphones gaming headset", keywords: ["gaming"]
-
-If the user is just chatting (greeting, thanks, general questions), respond naturally without the JSON block.`;
-
-
-// Parse AI response to extract product query
-const parseAIResponse = (response: string): AIResponse => {
-  const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
-  let productQuery;
-  let cleanMessage = response;
-
-  if (jsonMatch) {
-    try {
-      productQuery = JSON.parse(jsonMatch[1]);
-      cleanMessage = response.replace(/```json\s*[\s\S]*?\s*```/, '').trim();
-    } catch (e) {
-      console.warn('Failed to parse AI product query:', e);
-    }
-  }
-
-  return {
-    message: cleanMessage,
-    productQuery,
-  };
-};
+export interface ProductInsight {
+  product: Product;
+  reason: string;
+}
 
 // Call AI API
-const callAI = async (messages: ChatMessage[]): Promise<string> => {
-  if (AI_CONFIG.provider === 'mock' || !AI_CONFIG.apiKey) {
-    // Return mock response if no API key
-    return getMockResponse(messages[messages.length - 1].content);
+const callAI = async (messages: ChatMessage[], jsonMode: boolean = true): Promise<string> => {
+  if (!AI_CONFIG.apiKey) {
+    throw new Error('AI API key not configured');
   }
 
+  const body: Record<string, unknown> = {
+    model: AI_CONFIG.model,
+    messages,
+    temperature: 0.3,
+    max_tokens: 2000,
+  };
+
+  if (jsonMode) {
+    body.response_format = { type: "json_object" };
+  }
+
+  const response = await fetch(`${AI_CONFIG.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`AI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0]?.message?.content || '';
+};
+
+// Fetch all products from internal and eBay
+const fetchAllProducts = async (searchQuery: string, sourcePreference?: 'ebay' | 'internal' | 'all'): Promise<Product[]> => {
+  const allProducts: Product[] = [];
+  const source = sourcePreference || 'all';
+
+  // Fetch internal products (unless user only wants eBay)
+  if (source === 'all' || source === 'internal') {
+    try {
+      const internalResponse = await productService.getAllProducts();
+      const internalProducts = internalResponse.data.map((p: Product) => ({
+        ...p,
+        source: p.source || 'INTERNAL'
+      }));
+      allProducts.push(...internalProducts);
+    } catch (err) {
+      console.warn('Could not fetch internal products:', err);
+    }
+  }
+
+  // Fetch eBay products (unless user only wants internal)
+  if (source === 'all' || source === 'ebay') {
+    try {
+      const ebayResponse = await ebayService.searchProducts(searchQuery, 50);
+      const responseData = ebayResponse.data;
+
+      if (Array.isArray(responseData)) {
+        allProducts.push(...(responseData as EbayItem[]).map(transformEbayItem));
+      } else if (responseData && typeof responseData === 'object' && 'itemSummaries' in responseData) {
+        const items = (responseData as { itemSummaries: EbayItem[] }).itemSummaries;
+        allProducts.push(...items.map(transformEbayItem));
+      }
+    } catch (err) {
+      console.warn('Could not fetch eBay products:', err);
+    }
+  }
+
+  return allProducts;
+};
+
+// ==================== CONVERSATION CONTEXT ====================
+// Store conversation history AND the products that were shown
+interface ConversationContext {
+  messages: ChatMessage[];
+  lastProducts: Product[];
+  lastQuery: string;
+}
+
+let conversationContext: ConversationContext = {
+  messages: [],
+  lastProducts: [],
+  lastQuery: ''
+};
+
+// Format products for AI context
+const formatProductsForAI = (products: Product[]): string => {
+  if (products.length === 0) return 'No products currently shown.';
+
+  return products.map((p, i) =>
+    `${i + 1}. "${p.nom}" - $${p.prix?.toFixed(2)} (${p.source || 'Internal'})`
+  ).join('\n');
+};
+
+// ==================== MAIN CHAT FUNCTION ====================
+export const chatWithAI = async (userMessage: string): Promise<AIResponse> => {
   try {
-    const response = await fetch(`${AI_CONFIG.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: AI_CONFIG.model,
-        messages,
-        temperature: 0.7,
-        max_tokens: 500,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`AI API error: ${response.status}`);
+    if (!AI_CONFIG.apiKey) {
+      throw new Error('AI API key not configured');
     }
 
-    const data = await response.json();
-    return data.choices[0]?.message?.content || 'I apologize, I had trouble processing that.';
+    // Build context from previous conversation
+    const previousProductsContext = conversationContext.lastProducts.length > 0
+      ? `\n\nPREVIOUSLY SHOWN PRODUCTS (user may refer to these):\n${formatProductsForAI(conversationContext.lastProducts)}`
+      : '';
+
+    // STEP 1: Determine if this is a follow-up or new query
+    const intentPrompt = `You are a shopping assistant. Analyze this user message in context of the conversation.
+
+${previousProductsContext}
+
+Previous conversation:
+${conversationContext.messages.slice(-6).map(m => `${m.role}: ${m.content}`).join('\n')}
+
+Current user message: "${userMessage}"
+
+Determine:
+1. Is this a FOLLOW-UP question about previously shown products? (e.g., "which is the best value?", "what about the cheapest one?", "tell me more about option 2")
+2. Or is this a NEW product search?
+3. Does the user want products from a SPECIFIC SOURCE? (eBay, our store/internal)
+4. Is the user asking to SEARCH for something on eBay or find similar products? (This is a NEW SEARCH, not a follow-up)
+
+IMPORTANT: If user says things like "find these on eBay", "search eBay for...", "show me eBay options", "what's on eBay" - this is a NEW SEARCH with sourcePreference: "ebay", NOT a follow-up!
+
+Respond with JSON:
+{
+  "isFollowUp": true/false,
+  "isGeneralChat": true/false,
+  "wantsNewSearch": true/false,
+  "productType": "specific product type if new search",
+  "searchTerms": "search terms for the search (use previous product type if searching on different source)",
+  "maxPrice": null or number,
+  "minPrice": null or number,
+  "exclude": ["words", "to", "exclude"],
+  "sourcePreference": "ebay" or "internal" or "all",
+  "followUpIntent": "what the user wants to know about previous products (if follow-up)"
+}`;
+
+    const intentResponse = await callAI([
+      { role: 'system', content: intentPrompt },
+      { role: 'user', content: userMessage }
+    ]);
+
+    let intent: {
+      isFollowUp?: boolean;
+      isGeneralChat?: boolean;
+      productType?: string;
+      searchTerms?: string;
+      maxPrice?: number | null;
+      minPrice?: number | null;
+      exclude?: string[];
+      followUpIntent?: string;
+      sourcePreference?: 'ebay' | 'internal' | 'all';
+      wantsNewSearch?: boolean;
+    };
+
+    try {
+      intent = JSON.parse(intentResponse);
+    } catch {
+      intent = { isFollowUp: false, isGeneralChat: false, searchTerms: userMessage };
+    }
+
+    // ==================== HANDLE GENERAL CHAT ====================
+    if (intent.isGeneralChat) {
+      const chatResponse = await callAI([
+        { role: 'system', content: 'You are a friendly shopping assistant. Respond naturally. Respond with JSON: {"message": "your response"}' },
+        ...conversationContext.messages.slice(-4),
+        { role: 'user', content: userMessage }
+      ]);
+
+      try {
+        const parsed = JSON.parse(chatResponse);
+        conversationContext.messages.push(
+          { role: 'user', content: userMessage },
+          { role: 'assistant', content: parsed.message }
+        );
+        return { message: parsed.message, products: [] };
+      } catch {
+        return { message: "Hi! How can I help you find products today?", products: [] };
+      }
+    }
+
+    // ==================== HANDLE FOLLOW-UP QUESTIONS ====================
+    // Only handle as follow-up if it's truly a follow-up AND user doesn't want a new search
+    if (intent.isFollowUp && !intent.wantsNewSearch && conversationContext.lastProducts.length > 0) {
+      const followUpPrompt = `You are a shopping assistant. The user is asking a follow-up question about these products:
+
+PRODUCTS BEING DISCUSSED:
+${formatProductsForAI(conversationContext.lastProducts)}
+
+User's follow-up question: "${userMessage}"
+Intent: ${intent.followUpIntent || 'analyze these products'}
+
+Provide a helpful response analyzing the products. If they ask about "best value", "cheapest", "which one", etc., refer to the specific products by name.
+
+Respond with JSON:
+{
+  "message": "Your detailed, helpful response referring to specific products by name",
+  "analysis": {
+    "recommendation": "Your specific recommendation",
+    "bestValueIndex": 0,
+    "bestValueReason": "Why this is best value",
+    "cheapestIndex": 0,
+    "premiumIndex": 0,
+    "premiumReason": "Why this is premium"
+  }
+}
+
+IMPORTANT: Reference products by their actual names from the list above.`;
+
+      const followUpResponse = await callAI([
+        { role: 'system', content: followUpPrompt },
+        ...conversationContext.messages.slice(-4),
+        { role: 'user', content: userMessage }
+      ]);
+
+      let parsed;
+      try {
+        parsed = JSON.parse(followUpResponse);
+      } catch {
+        return { message: "I'm not sure what you're asking. Could you clarify?", products: conversationContext.lastProducts };
+      }
+
+      // Build analysis from AI response
+      const products = conversationContext.lastProducts;
+      let analysis: ProductAnalysis | undefined;
+
+      if (products.length > 0 && parsed.analysis) {
+        const prices = products.map(p => p.prix || 0).filter(p => p > 0);
+        const internalProducts = products.filter(p => p.source === 'INTERNAL');
+        const ebayProducts = products.filter(p => p.source === 'EBAY');
+
+        const internalAvg = internalProducts.length > 0
+          ? internalProducts.reduce((sum, p) => sum + (p.prix || 0), 0) / internalProducts.length : 0;
+        const ebayAvg = ebayProducts.length > 0
+          ? ebayProducts.reduce((sum, p) => sum + (p.prix || 0), 0) / ebayProducts.length : 0;
+
+        let verdict = '';
+        if (internalAvg > 0 && ebayAvg > 0) {
+          const diff = Math.abs(((internalAvg - ebayAvg) / ebayAvg) * 100).toFixed(0);
+          verdict = internalAvg < ebayAvg ? `Our store is ${diff}% cheaper!` : `eBay is ${diff}% cheaper`;
+        }
+
+        analysis = {
+          priceRange: {
+            min: prices.length > 0 ? Math.min(...prices) : 0,
+            max: prices.length > 0 ? Math.max(...prices) : 0,
+            avg: prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0
+          },
+          recommendation: parsed.analysis.recommendation || '',
+          comparison: internalAvg > 0 && ebayAvg > 0 ? { internalAvg, ebayAvg, verdict } : undefined
+        };
+
+        if (typeof parsed.analysis.bestValueIndex === 'number' && products[parsed.analysis.bestValueIndex]) {
+          analysis.bestValue = {
+            product: products[parsed.analysis.bestValueIndex],
+            reason: parsed.analysis.bestValueReason || 'Best value for money'
+          };
+        }
+
+        if (products.length > 0) {
+          const sorted = [...products].sort((a, b) => (a.prix || 0) - (b.prix || 0));
+          analysis.cheapest = { product: sorted[0], reason: 'Lowest price' };
+        }
+
+        if (typeof parsed.analysis.premiumIndex === 'number' && products[parsed.analysis.premiumIndex]) {
+          analysis.premium = {
+            product: products[parsed.analysis.premiumIndex],
+            reason: parsed.analysis.premiumReason || 'Premium option'
+          };
+        }
+      }
+
+      // Update conversation
+      conversationContext.messages.push(
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: parsed.message }
+      );
+
+      return {
+        message: parsed.message,
+        products: products,
+        analysis
+      };
+    }
+
+    // ==================== HANDLE NEW PRODUCT SEARCH ====================
+    // Use previous product type if user is searching on a different source
+    const searchQuery = intent.searchTerms || intent.productType || conversationContext.lastQuery || userMessage;
+    let products = await fetchAllProducts(searchQuery, intent.sourcePreference);
+
+    // Apply price filters
+    if (intent.maxPrice) {
+      const maxPrice = intent.maxPrice;
+      products = products.filter(p => (p.prix || 0) <= maxPrice);
+    }
+    if (intent.minPrice) {
+      const minPrice = intent.minPrice;
+      products = products.filter(p => (p.prix || 0) >= minPrice);
+    }
+
+    // If user wants specific source, filter again to be sure
+    if (intent.sourcePreference === 'ebay') {
+      products = products.filter(p => p.source === 'EBAY');
+    } else if (intent.sourcePreference === 'internal') {
+      products = products.filter(p => p.source === 'INTERNAL' || !p.source);
+    }
+
+    // Ask AI to filter and analyze
+    const productListForAI = products.slice(0, 40).map((p, i) => ({
+      index: i,
+      name: p.nom,
+      price: p.prix,
+      source: p.source,
+      description: p.description?.substring(0, 100) || ''
+    }));
+
+    const sourceInfo = intent.sourcePreference === 'ebay' ? 'ONLY eBay products' :
+                       intent.sourcePreference === 'internal' ? 'ONLY our store products' : 'all sources';
+
+    const filterPrompt = `You are a shopping assistant. User wants: "${userMessage}"
+Specific product type: ${intent.productType || 'unknown'}
+Source: ${sourceInfo}
+${intent.exclude?.length ? `EXCLUDE these: ${intent.exclude.join(', ')}` : ''}
+
+PRODUCTS FOUND (${productListForAI.length}):
+${JSON.stringify(productListForAI, null, 2)}
+
+YOUR TASK:
+1. STRICTLY filter - only include products that ARE ${intent.productType || 'what the user asked for'}
+2. EXCLUDE accessories, cases, covers, chargers, cables unless that's what user wants
+3. Analyze the relevant products
+
+Respond with JSON:
+{
+  "message": "Your helpful response about what you found",
+  "relevantProductIndices": [0, 1, 2],
+  "hasRelevantProducts": true/false,
+  "analysis": {
+    "recommendation": "Your recommendation",
+    "bestValueIndex": 0,
+    "bestValueReason": "Why",
+    "cheapestIndex": 0,
+    "premiumIndex": 0,
+    "premiumReason": "Why"
+  }
+}
+
+If NO relevant products found, set hasRelevantProducts: false and relevantProductIndices: []`;
+
+    const filterResponse = await callAI([
+      { role: 'system', content: filterPrompt },
+      { role: 'user', content: userMessage }
+    ]);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(filterResponse);
+    } catch {
+      return { message: "I had trouble analyzing the products. Please try again.", products: [] };
+    }
+
+    // Get relevant products
+    let relevantProducts: Product[] = [];
+    if (parsed.hasRelevantProducts && parsed.relevantProductIndices?.length > 0) {
+      relevantProducts = parsed.relevantProductIndices
+        .filter((idx: number) => idx >= 0 && idx < products.length)
+        .map((idx: number) => products[idx]);
+    }
+
+    // Sort by price
+    relevantProducts.sort((a, b) => (a.prix || 0) - (b.prix || 0));
+
+    // Build analysis
+    let analysis: ProductAnalysis | undefined;
+    if (relevantProducts.length > 0 && parsed.analysis) {
+      const prices = relevantProducts.map(p => p.prix || 0).filter(p => p > 0);
+      const internalProducts = relevantProducts.filter(p => p.source === 'INTERNAL');
+      const ebayProducts = relevantProducts.filter(p => p.source === 'EBAY');
+
+      const internalAvg = internalProducts.length > 0
+        ? internalProducts.reduce((sum, p) => sum + (p.prix || 0), 0) / internalProducts.length : 0;
+      const ebayAvg = ebayProducts.length > 0
+        ? ebayProducts.reduce((sum, p) => sum + (p.prix || 0), 0) / ebayProducts.length : 0;
+
+      let verdict = '';
+      if (internalAvg > 0 && ebayAvg > 0) {
+        const diff = Math.abs(((internalAvg - ebayAvg) / ebayAvg) * 100).toFixed(0);
+        verdict = internalAvg < ebayAvg ? `Our store is ${diff}% cheaper!` : `eBay is ${diff}% cheaper`;
+      }
+
+      analysis = {
+        priceRange: {
+          min: prices.length > 0 ? Math.min(...prices) : 0,
+          max: prices.length > 0 ? Math.max(...prices) : 0,
+          avg: prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0
+        },
+        recommendation: parsed.analysis.recommendation || '',
+        comparison: internalAvg > 0 && ebayAvg > 0 ? { internalAvg, ebayAvg, verdict } : undefined
+      };
+
+      if (typeof parsed.analysis.bestValueIndex === 'number' && relevantProducts[parsed.analysis.bestValueIndex]) {
+        analysis.bestValue = {
+          product: relevantProducts[parsed.analysis.bestValueIndex],
+          reason: parsed.analysis.bestValueReason || 'Best value'
+        };
+      }
+
+      if (relevantProducts.length > 0) {
+        analysis.cheapest = { product: relevantProducts[0], reason: 'Lowest price' };
+      }
+
+      if (typeof parsed.analysis.premiumIndex === 'number' && relevantProducts[parsed.analysis.premiumIndex]) {
+        analysis.premium = {
+          product: relevantProducts[parsed.analysis.premiumIndex],
+          reason: parsed.analysis.premiumReason || 'Premium option'
+        };
+      }
+    }
+
+    // ==================== SAVE CONTEXT ====================
+    conversationContext.messages.push(
+      { role: 'user', content: userMessage },
+      { role: 'assistant', content: parsed.message }
+    );
+
+    // Keep history manageable
+    if (conversationContext.messages.length > 12) {
+      conversationContext.messages = conversationContext.messages.slice(-12);
+    }
+
+    // IMPORTANT: Save the products for follow-up questions
+    conversationContext.lastProducts = relevantProducts;
+    conversationContext.lastQuery = userMessage;
+
+    return {
+      message: parsed.message,
+      products: relevantProducts,
+      analysis
+    };
+
   } catch (error) {
-    console.error('AI API error:', error);
-    // Fallback to mock response
-    return getMockResponse(messages[messages.length - 1].content);
+    console.error('AI chat error:', error);
+    return {
+      message: error instanceof Error ? `Sorry: ${error.message}` : 'Something went wrong.',
+      products: [],
+    };
   }
-};
-
-// Smart mock responses when no API key is configured
-const getMockResponse = (userMessage: string): string => {
-  const lower = userMessage.toLowerCase();
-
-  // Greetings
-  if (/^(hi|hello|hey|bonjour|salut)/i.test(lower)) {
-    return "👋 Hey there! I'm your AI shopping assistant. I can help you find amazing products, compare prices between our store and eBay, and discover the best deals. What are you looking for today?";
-  }
-
-  // Help
-  if (lower.includes('help') || lower.includes('what can you do')) {
-    return "🤖 I'm here to help you shop smarter! Here's what I can do:\n\n• 🔍 Find products by category or keywords\n• 📊 Compare prices (Our Store vs eBay)\n• 💰 Find budget-friendly options\n• 🌿 Discover bio & organic products\n• ⭐ Recommend premium items\n\nJust tell me what you're looking for!";
-  }
-
-  // Thanks
-  if (lower.includes('thank')) {
-    return "😊 You're welcome! Happy to help. Let me know if you need anything else!";
-  }
-
-  // Goodbye
-  if (lower.includes('bye') || lower.includes('goodbye')) {
-    return "👋 See you later! Come back anytime you need help finding great deals!";
-  }
-
-  // Beauty products
-  if (lower.includes('beauty') || lower.includes('skincare') || lower.includes('makeup') || lower.includes('cosmetic')) {
-    const response = "💄 Great choice! I'll search for beauty products for you. I'll compare prices between our store and eBay to find you the best deals!";
-    if (lower.includes('bio') || lower.includes('organic') || lower.includes('natural')) {
-      return response + "\n\n🌿 I noticed you're interested in natural/organic options - I'll prioritize those!\n\n```json\n{\"category\": \"beauty\", \"keywords\": [\"bio\", \"organic\", \"natural\"], \"pricePreference\": \"any\", \"wantsComparison\": true}\n```";
-    }
-    if (lower.includes('cheap') || lower.includes('affordable') || lower.includes('budget')) {
-      return response + "\n\n💰 Looking for budget-friendly options - I'll sort by best prices!\n\n```json\n{\"category\": \"beauty\", \"keywords\": [], \"pricePreference\": \"cheap\", \"wantsComparison\": true}\n```";
-    }
-    return response + "\n\n```json\n{\"category\": \"beauty\", \"keywords\": [], \"pricePreference\": \"any\", \"wantsComparison\": true}\n```";
-  }
-
-  // Electronics
-  if (lower.includes('electronic') || lower.includes('phone') || lower.includes('laptop') || lower.includes('computer') || lower.includes('tech') || lower.includes('gadget')) {
-    const response = "📱 Electronics coming right up! Let me search our catalog and eBay for the best options.";
-    if (lower.includes('cheap') || lower.includes('affordable') || lower.includes('budget')) {
-      return response + "\n\n💰 I'll focus on budget-friendly tech!\n\n```json\n{\"category\": \"electronics\", \"keywords\": [], \"pricePreference\": \"cheap\", \"wantsComparison\": true}\n```";
-    }
-    if (lower.includes('premium') || lower.includes('best') || lower.includes('high-end')) {
-      return response + "\n\n⭐ Looking for premium quality!\n\n```json\n{\"category\": \"electronics\", \"keywords\": [\"premium\"], \"pricePreference\": \"expensive\", \"wantsComparison\": true}\n```";
-    }
-    return response + "\n\n```json\n{\"category\": \"electronics\", \"keywords\": [], \"pricePreference\": \"any\", \"wantsComparison\": true}\n```";
-  }
-
-  // Clothing
-  if (lower.includes('cloth') || lower.includes('fashion') || lower.includes('shirt') || lower.includes('dress') || lower.includes('wear') || lower.includes('outfit')) {
-    return "👕 Fashion time! Let me find some great clothing options for you. I'll compare prices across sources!\n\n```json\n{\"category\": \"clothing\", \"keywords\": [], \"pricePreference\": \"any\", \"wantsComparison\": true}\n```";
-  }
-
-  // Sports
-  if (lower.includes('sport') || lower.includes('fitness') || lower.includes('gym') || lower.includes('workout') || lower.includes('exercise')) {
-    return "🏃 Let's get you geared up! I'll find sports and fitness products from our store and eBay.\n\n```json\n{\"category\": \"sports\", \"keywords\": [], \"pricePreference\": \"any\", \"wantsComparison\": true}\n```";
-  }
-
-  // Home
-  if (lower.includes('home') || lower.includes('furniture') || lower.includes('decor') || lower.includes('kitchen')) {
-    return "🏠 Home sweet home! Let me search for home products and compare the best deals.\n\n```json\n{\"category\": \"home\", \"keywords\": [], \"pricePreference\": \"any\", \"wantsComparison\": true}\n```";
-  }
-
-  // Compare / prices
-  if (lower.includes('compare') || lower.includes('price') || lower.includes('deal') || lower.includes('vs')) {
-    return "📊 I love finding deals! Tell me what category you're interested in (beauty, electronics, clothing, sports, or home) and I'll compare prices between our store and eBay!";
-  }
-
-  // Bio / Organic
-  if (lower.includes('bio') || lower.includes('organic') || lower.includes('natural') || lower.includes('eco')) {
-    return "🌿 Eco-friendly shopping! What category are you looking for? I can find bio and organic options in beauty, home, and more!";
-  }
-
-  // Cheap / Budget
-  if (lower.includes('cheap') || lower.includes('budget') || lower.includes('affordable')) {
-    return "💰 Budget-conscious shopping is smart! What type of product are you looking for? I'll find the best prices!";
-  }
-
-  // Generic product search
-  if (lower.includes('find') || lower.includes('search') || lower.includes('show') || lower.includes('looking') || lower.includes('want') || lower.includes('need') || lower.includes('buy') || lower.includes('get')) {
-    return "🔍 I'd love to help you find something! Could you tell me more about what you're looking for?\n\nYou can ask for:\n• Categories: beauty, electronics, clothing, sports, home\n• Preferences: cheap, premium, bio/organic\n• Comparisons: \"compare prices on electronics\"";
-  }
-
-  // Default response
-  return "🤔 I'm your shopping assistant! I can help you:\n\n• 🔍 Find products (beauty, electronics, clothing, etc.)\n• 📊 Compare prices between our store and eBay\n• 💰 Find the best deals\n• 🌿 Discover organic/bio options\n\nTry asking: \"Find me affordable beauty products\" or \"Compare electronics prices\"";
-};
-
-// Conversation history for context
-let conversationHistory: ChatMessage[] = [];
-
-// Main AI chat function
-export const chatWithAI = async (userMessage: string, products?: Product[]): Promise<AIResponse> => {
-  // Add context about available products if provided
-  let contextMessage = '';
-  if (products && products.length > 0) {
-    const productSummary = products.slice(0, 5).map(p =>
-      `- ${p.nom}: $${p.prix} (${p.source})`
-    ).join('\n');
-    contextMessage = `\n\nRecent products found:\n${productSummary}`;
-  }
-
-  // Build messages array
-  const messages: ChatMessage[] = [
-    { role: 'system', content: SYSTEM_PROMPT + contextMessage },
-    ...conversationHistory.slice(-6), // Keep last 6 messages for context
-    { role: 'user', content: userMessage },
-  ];
-
-  // Get AI response
-  const response = await callAI(messages);
-
-  // Update conversation history
-  conversationHistory.push(
-    { role: 'user', content: userMessage },
-    { role: 'assistant', content: response }
-  );
-
-  // Keep history manageable
-  if (conversationHistory.length > 12) {
-    conversationHistory = conversationHistory.slice(-12);
-  }
-
-  return parseAIResponse(response);
 };
 
 // Reset conversation
 export const resetConversation = (): void => {
-  conversationHistory = [];
+  conversationContext = {
+    messages: [],
+    lastProducts: [],
+    lastQuery: ''
+  };
 };
 
 // Check if AI is configured
 export const isAIConfigured = (): boolean => {
-  return AI_CONFIG.provider !== 'mock' && !!AI_CONFIG.apiKey;
+  return !!AI_CONFIG.apiKey;
 };
 
 export default { chatWithAI, resetConversation, isAIConfigured };

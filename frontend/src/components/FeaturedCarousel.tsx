@@ -50,7 +50,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products }) => {
 
   return (
     <div
-      className="relative w-full py-10 px-4 bg-gradient-to-b from-white to-gray-50"
+      className="relative w-full py-10 px-4"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
@@ -129,7 +129,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="group bg-white rounded-2xl p-4 cursor-pointer border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-300 flex flex-col h-full"
+      className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 cursor-pointer border border-white/20 shadow-sm hover:shadow-xl hover:border-white/40 transition-all duration-300 flex flex-col h-full"
     >
       <div className="relative aspect-square mb-4 overflow-hidden rounded-xl bg-gray-50">
         {product.imageUrl && !imgError ? (

@@ -1,14 +1,15 @@
-# E-Commerce Platform
+# E-Commerce Aggregator Platform
 
-An online shopping platform built with a microservices architecture. Users can browse products, add items to their cart, place orders, and pay securely via PayPal.
+A centralized shopping platform that aggregates products from multiple e-commerce websites (Amazon, eBay, etc.) into one place. Users can search, compare prices, and get AI-powered recommendations to find the best deals without switching between sites.
 
 ## What It Does
 
-- **Product Catalog** – Browse and search products by category
-- **User Accounts** – Register, log in, and manage your profile
-- **Shopping Cart** – Add products and proceed to checkout
-- **Order Management** – Place orders and track their status
-- **Payments** – Secure checkout with PayPal integration
+- **Product Aggregation** – Search products across multiple e-commerce sources from a single interface
+- **AI Recommendations** – Get smart suggestions to compare options and find the best match for your needs
+- **Price Comparison** – View prices from different platforms side by side
+- **Internal Catalog** – Browse and purchase from our own product inventory
+- **User Accounts** – Register, log in, and track your order history
+- **Secure Payments** – Checkout with PayPal for internal purchases
 
 ## Tech Stack
 
@@ -81,4 +82,4 @@ All API requests go through `http://localhost:8080`
 
 ## About
 
-This project was developed as an academic engineering project (PFA) to demonstrate distributed systems design and full-stack development skills.
+This project was developed as an academic engineering project (PFA). It demonstrates how to build a distributed system that aggregates data from multiple external sources and uses AI to enhance the user's shopping experience.

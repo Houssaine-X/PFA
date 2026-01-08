@@ -1,43 +1,56 @@
-# E-Commerce Microservices Platform
+# E-Commerce Platform
 
-A modern e-commerce platform built with microservices architecture using Spring Boot and React.
+An online shopping platform built with a microservices architecture. Users can browse products, add items to their cart, place orders, and pay securely via PayPal.
+
+## What It Does
+
+- **Product Catalog** – Browse and search products by category
+- **User Accounts** – Register, log in, and manage your profile
+- **Shopping Cart** – Add products and proceed to checkout
+- **Order Management** – Place orders and track their status
+- **Payments** – Secure checkout with PayPal integration
 
 ## Tech Stack
 
-**Backend:** Spring Boot, Spring Cloud, Netflix Eureka, H2 Database  
-**Frontend:** React, TypeScript, Tailwind CSS  
-**Payments:** PayPal Integration
+| Layer | Technologies |
+|-------|--------------|
+| Backend | Java 17, Spring Boot, Spring Cloud |
+| Frontend | React, TypeScript, Tailwind CSS |
+| Infrastructure | Netflix Eureka, API Gateway |
+| Database | H2 (in-memory) |
+| Payments | PayPal REST API |
 
-## Architecture
+## Architecture Overview
 
-| Service | Port | Description |
-|---------|------|-------------|
+The backend is split into independent services that communicate through an API Gateway:
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| API Gateway | 8080 | Single entry point for all requests |
+| Eureka Server | 8761 | Service registry and discovery |
 | Config Server | 8888 | Centralized configuration |
-| Eureka Server | 8761 | Service discovery |
-| API Gateway | 8080 | Routing & load balancing |
-| User Service | 8083 | User management & authentication |
-| Product Service | 8081 | Product catalog |
-| Order Service | 8085 | Order management |
-| Payment Service | 8084 | PayPal payments |
+| User Service | 8083 | Authentication and user data |
+| Product Service | 8081 | Product catalog and inventory |
+| Order Service | 8085 | Order processing |
+| Payment Service | 8084 | PayPal payment handling |
 
 ## Getting Started
 
-### Prerequisites
+### Requirements
 
-- Java 17+
-- Node.js 18+
-- npm or yarn
+- Java 17 or higher
+- Node.js 18 or higher
 
-### Run Backend
+### Start the Backend
 
 ```bash
 cd App/catalogue-service
 start-all-services.bat
 ```
 
-Wait 2-3 minutes for all services to start. Verify at http://localhost:8761
+Wait 2–3 minutes for services to initialize. Check http://localhost:8761 to verify all services are running.
 
-### Run Frontend
+### Start the Frontend
 
 ```bash
 cd frontend
@@ -45,11 +58,19 @@ npm install
 npm start
 ```
 
-Access the app at http://localhost:3000
+Open http://localhost:3000 in your browser.
 
-## API Endpoints
+## Project Structure
 
-All requests go through the gateway at `http://localhost:8080`
+```
+App/catalogue-service/     Backend microservices
+frontend/                  React web application
+Documentation-Projet/      Project documentation
+```
+
+## API Reference
+
+All API requests go through `http://localhost:8080`
 
 | Resource | Endpoints |
 |----------|-----------|
@@ -58,22 +79,6 @@ All requests go through the gateway at `http://localhost:8080`
 | Orders | `GET/POST /api/orders`, `GET /api/orders/user/{userId}` |
 | Payments | `POST /api/payments/paypal/create`, `POST /api/payments/paypal/execute` |
 
-## Project Structure
+## About
 
-```
-├── App/catalogue-service/    # Backend microservices
-│   ├── config-server/
-│   ├── eureka-server/
-│   ├── api-gateway/
-│   ├── user-service/
-│   ├── product-service/
-│   ├── order-service/
-│   └── payment-service/
-├── frontend/                 # React application
-└── Documentation-Projet/     # Project documentation
-```
-
-## License
-
-This project was developed as part of an academic engineering project (PFA).
-
+This project was developed as an academic engineering project (PFA) to demonstrate distributed systems design and full-stack development skills.
